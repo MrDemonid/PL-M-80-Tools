@@ -1,0 +1,3 @@
+FIL io.obj,binasc.obj,errrpt.obj,lineuc.obj,link.obj,link1a.obj,link3.obj,link3a.obj,linkov.obj,mkfnam.obj,pstafn.obj,pstfn.obj,skpspc.obj,strequ.obj,wrerr.obj,version.obj
+
+RES version.res

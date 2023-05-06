@@ -1,0 +1,3 @@
+FIL asm1m.obj,asm2m.obj,asm3m.obj,asm4m.obj,asm5m.obj,asm6m.obj,asm8m.obj,asxref.obj,cntrlm.obj,debug.obj,emitm.obj,globlm.obj,initm.obj,io.obj,keym.obj,listm.obj,pcktok.obj,rdsrc.obj,startm.obj,version.obj
+
+RES version.res

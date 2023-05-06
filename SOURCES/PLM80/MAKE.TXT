@@ -1,0 +1,3 @@
+FIL accessor.obj,adninf.obj,alloc.obj,allocs.obj,backup.obj,cpytil.obj,creati.obj,data.obj,debug.obj,endcom.obj,fatal.obj,fatlio.obj,fi.obj,findmi.obj,fiscop.obj,io.obj,itoa.obj,lookup.obj,lstinf.obj,lstlin.obj,lstsup.obj,main.obj,main0.obj,main1.obj,main2.obj,main3.obj,main4.obj,main5.obj,main6.obj,page.obj,pdata4.obj,pdata6.obj,plm0a.obj,plm0b.obj,plm0e.obj,plm0f.obj,plm0g.obj,plm1a.obj,plm1b.obj,plm1c.obj,plm1d.obj,plm1e.obj,plm1f.obj,plm2a.obj,plm2b.obj,plm2c.obj,plm2d.obj,plm2e.obj,plm2f.obj,plm2g.obj,plm2h.obj,plm3a.obj,plm3b.obj,plm4a.obj,plm4b.obj,plm4c.obj,plm6a.obj,plma.obj,plmb.obj,plmfile.obj,prints.obj,putlst.obj,strcmp.obj,util.obj,version.obj,wrclst.obj
+
+RES version.res

@@ -1,0 +1,98 @@
+/****************************************************************************
+ *  link: C port of Intel's LINK v3.0                                       *
+ *  Copyright (C) 2020 Mark Ogden <mark.pm.ogden@btinternet.com>            *
+ *                                                                          *
+ *  This program is free software; you can redistribute it and/or           *
+ *  modify it under the terms of the GNU General Public License             *
+ *  as published by the Free Software Foundation; either version 2          *
+ *  of the License, or (at your option) any later version.                  *
+ *                                                                          *
+ *  This program is distributed in the hope that it will be useful,         *
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ *  GNU General Public License for more details.                            *
+ *                                                                          *
+ *  You should have received a copy of the GNU General Public License       *
+ *  along with this program; if not, write to the Free Software             *
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,              *
+ *  MA  02110-1301, USA.                                                    *
+ *                                                                          *
+ ****************************************************************************/
+
+
+#include "link.h"
+
+static byte errStrTable[] =
+                "\x2" "ILLEGAL AFTN ARGUMENT\0"
+                "\x3" "TOO MANY OPEN FILES\0"
+                "\x4" "INCORRECTLY SPECIFIED FILE\0"
+                "\x5" "UNRECOGNIZED DEVICE NAME\0"
+                "\x9" "DISK DIRECTORY FULL\0"
+                "\xC" "FILE IS ALREADY OPEN\0"
+                "\xD" "NO SUCH FILE\0"
+                "\xE" "WRITE PROTECTED\0"
+                "\x11" "NOT A DISK FILE\0"
+                "\x13" "ATTEMPTED SEEK ON NON-DISK FILE\0"
+                "\x14" "ATTEMPTED BACK SEEK TOO FAR\0"
+                "\x15" "CAN'T RESCAN\0"
+                "\x16" "ILLEGAL ACCESS MODE TO OPEN\0"
+                "\x17" "MISSING FILENAME\0"
+                "\x1B" "ILLEGAL SEEK COMMAND\0"
+                "\x1C" "MISSING EXTENSION\0"
+                "\x1F" "CAN'T SEEK ON WRITE ONLY FILE\0"
+                "\x20" "CAN'T DELETE OPEN FILE\0"
+                "\x22" "ILLEGAL LOAD COMMAND\0"
+                "\x23" "SEEK PAST EOF\0"
+                "\xCB" "INVALID SYNTAX\0"
+                "\xCC" "PREMATURE EOF\0"
+                "\xD0" "CHECKSUM ERROR\0"
+                "\xD2" "INSUFFICIENT MEMORY\0"
+                "\xD3" "RECORD TOO LONG\0"
+                "\xD4" "ILLEGAL RELO RECORD\0"
+                "\xD5" "FIXUP BOUNDS ERROR\0"
+                "\xDA" "ILLEGAL RECORD FORMAT\0"
+                "\xDB" "PHASE ERROR\0"
+                "\xDC" "NO EOF\0"
+                "\xDD"  "SEGMENT TOO LARGE\0"
+                "\xE0" "BAD RECORD SEQUENCE\0"
+                "\xE1" "INVALID NAME\0"
+                "\xE2" "NAME TOO LONG\0"
+                "\xE3" "LEFT PARENTHESIS EXPECTED\0"
+                "\xE4" "RIGHT PARENTHESIS EXPECTED\0"
+                "\xE5" "UNRECOGNIZED CONTROL\0"
+                "\xE9" "'TO' EXPECTED\0"
+                "\xEA" "DUPLICATE FILE NAME\0"
+                "\xEB" "NOT A LIBRARY\0"
+                "\xEC" "TOO MANY COMMON SEGMENTS\0"
+                "\xEE" "ILLEGAL STACK CONTENT RECORD\0"
+                "\xEF" "NO MODULE HEADER RECORD";
+
+void ReportError(word errCode)
+{
+        word i;
+        word status;
+
+        if (Low(errCode) != 0)
+        {
+                i = 0;
+                while (i < sizeof(errStrTable)) {
+                        if (Low(errCode) == errStrTable[i])
+                        {
+                                Write(0, " ", 1, &status);
+                                while (errStrTable[i = i + 1] != 0) {
+                                        Write(0, &errStrTable[i], 1, &status);
+                                }
+                                Write(0, "\r\n", 2, &status);
+                                return;
+                        }
+                        else {
+                                while (errStrTable[i = i + 1] != 0)
+                                        ;
+                                i = i + 1;
+                        }
+                }
+                Error(errCode); /* pass to ISIS */
+        }
+} /* ReportError() */
+
+

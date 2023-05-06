@@ -1,0 +1,32 @@
+#include <verrsrc.h>
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,2,0,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS VS_FF_DEBUG
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080904b0"
+        BEGIN
+            VALUE "FileDescription", "ISIS-II OBJECT LINKER v4.0"
+            VALUE "CompanyName", "Andrey Hlus"
+            VALUE "LegalCopyright", "(C) 2023 Andrey Hlus"
+            VALUE "Created based on", "C port of Intel's ISIS-II LINK v3.0  (C)2020 Mark Ogden"
+            VALUE "OriginalFilename", "LINK.EXE"
+            VALUE "ProductName", "LINK"
+            VALUE "FileVersion", "1.1"
+            VALUE "ProductVersion", "1.1"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x809, 1200
+    END
+END
+

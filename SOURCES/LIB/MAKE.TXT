@@ -1,0 +1,3 @@
+FIL io.obj,lib.obj,lib1.obj,lib3.obj,lib4.obj,version.obj
+
+RES version.res
