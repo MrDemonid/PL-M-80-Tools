@@ -74,7 +74,7 @@ void FatlIO(file_t *fileP, word errNum)
     PrintStr(errHeader, Length(errHeader));
     PrintStr(fileP->sNam, 6);
     PrintStr(aName, Length(aName));
-    PrintStr(fileP->fNam, 15);
+    PrintStr(fileP->fNam, 17);
     PrintStr(aError, Length(aError));
     len = Num2Asc(errNum, 0, 10, buf);
     PrintStr(buf, len);

@@ -108,7 +108,7 @@ static byte chrClass;
 static byte tknLen;
 static pointer optStrValP;
 static word optNumValue;
-static byte optFileName[16];
+static byte optFileName[18];
 static bool ixiGiven;
 static bool objGiven;
 static bool lstGiven;
@@ -224,11 +224,11 @@ static void AcceptFileName()
         while (*curChP != ' ' && *curChP != ')' && chrClass != CC_NEWLINE)  // doesn't allow tab
             NxtCh();
         tknLen = (byte)(curChP - optStrValP);
-        if (tknLen > 14) {
+        if (tknLen > 16) {
             BadCmdTail(ERR17);  /* INVALID PATH-NAME */
             tknLen = 0;
         } else {
-            memset(optFileName, ' ', 16);
+            memset(optFileName, ' ', sizeof(optFileName));
             memcpy(optFileName, optStrValP, tknLen);
             optStrValP = optFileName;
             tknLen = tknLen + 1;    // include trailing space

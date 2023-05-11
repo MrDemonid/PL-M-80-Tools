@@ -610,8 +610,8 @@ void CreateIxrefFile()
         j = 2;
     else
         j = 0;
-    Sub_4EAA((pointer)&srcFileTable[j], 10);            /* fileName minus any :fx: */
-    Sub_4EAA("---------", 9);
+    Sub_4EAA((pointer)&srcFileTable[j], 12);            /* fileName minus any :fx: */
+    Sub_4EAA("-------", 7);
 
     for (p = 1; p <= dictSize; p++) {
         curInfoP = WordP(dictionaryP)[p];

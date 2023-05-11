@@ -126,9 +126,10 @@ void Fwrite(file_t * fp, pointer buf, word len)
 void InitF(file_t *fileP, pointer sNam, pointer fNam)
 {
     fileP->aftn = 0;
-    memset(fileP->sNam, ' ', 22);
+    memset(fileP->sNam, ' ', 6);
+    memset(fileP->fNam, ' ', 18);
     CpyTill(sNam, fileP->sNam, 6, ' ');
-    CpyTill(fNam, fileP->fNam, 15, ' ');
+    CpyTill(fNam, fileP->fNam, 17, ' ');
 } /* InitF() */
 
 

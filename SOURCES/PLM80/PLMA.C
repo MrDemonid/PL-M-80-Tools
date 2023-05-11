@@ -75,7 +75,7 @@ static bool TestToken(pointer str, byte len)
 static void SkipAlphaNum()
 {
     while ('A' <= *cmdTextP && *cmdTextP <= 'Z' || 'a' <= *cmdTextP && *cmdTextP <= 'z'
-                || '0' <= *cmdTextP && *cmdTextP <= '9')
+                || '0' <= *cmdTextP && *cmdTextP <= '9' || *cmdTextP == '_')
         cmdTextP++;
 } /* SkipAlphaNum() */
 
@@ -215,10 +215,10 @@ static void ParseSrcFileName()
     }
     fileName = cmdTextP;
     SkipAlphaNum();
-    if ((nameLen = (word)(cmdTextP - fileName)) == 0 || nameLen > 6)
+    if ((nameLen = (word)(cmdTextP - fileName)) == 0 || nameLen > 8)
         Fatal(aSourceFileName, Length(aSourceFileName));
     srcStemLen = (byte)(cmdTextP - fullName);
-    memset(srcStemName, ' ', 10);
+    memset(srcStemName, ' ', 12);
     memmove(srcStemName, fullName, srcStemLen);
     if (*cmdTextP == '.') {
         fileName = ++cmdTextP;
@@ -228,7 +228,7 @@ static void ParseSrcFileName()
     }
     nameLen = (word)(cmdTextP - fullName);
     srcFileIdx = 0;
-    memset(srcFileTable, ' ', 16);
+    memset(srcFileTable, ' ', 18);
     memmove(srcFileTable, fullName, nameLen);
     memset(&srcFileTable[8], 0, 4);
     SkipSpace();
@@ -243,16 +243,16 @@ static void ParseSrcFileName()
 static void InitFilesAndDefaults()
 {
     LEFTMARGIN = 1;
-    memset(ixiFileName, ' ', 15);
+    memset(ixiFileName, ' ', FILE_NAME_LEN);
     memmove(ixiFileName, srcStemName, srcStemLen);
     memmove(&ixiFileName[srcStemLen], aIxi, 4);
     InitF(&ixiFile, "IXREF ", ixiFileName);
     objBlk = objByte = 0;
-    memset(objFileName, ' ', 15);
+    memset(objFileName, ' ', FILE_NAME_LEN);
     memmove(objFileName, srcStemName, srcStemLen);
     memmove(&objFileName[srcStemLen], aObj, 4);
     InitF(&objFile, "OBJECT", objFileName);
-    memset(lstFileName, ' ', 15);
+    memset(lstFileName, ' ', FILE_NAME_LEN);
     memmove(lstFileName, srcStemName, srcStemLen);
     memmove(&lstFileName[srcStemLen], aLst, 4);
     InitF(&lstFil, "LIST ", lstFileName);

@@ -52,6 +52,7 @@ OBJCPM:
 
 PLM80:
   - Fixed all found errors.
+  - The maximum file name is now 8 characters.
   - Added two words: 'Break' and 'Continue', for cycles.
   - The '_' character is allowed in identifier names, as in PL/M-286.
   - The page length for the listing file has been expanded from 255 to 65535 lines.

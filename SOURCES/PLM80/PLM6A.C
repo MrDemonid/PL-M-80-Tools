@@ -76,7 +76,7 @@ static void Error_6()
 
 void MiscControl() // was also in plm4a.c
 {
-    byte name[19];
+    byte name[20];
 
     switch (cfCode) {
     case T2_LIST: listOff = false; break;
@@ -95,7 +95,7 @@ void MiscControl() // was also in plm4a.c
             Fread(&tx2File, &name[13], 6);      /* Read() in name of include file */
             Fread(&tx2File, &name[6], 7);
             Fread(&tx2File, &name[0], 7);       /* overwrites the type byte */
-            memmove((pointer)&srcFileTable[srcFileIdx], name, 16);
+            memmove((pointer)&srcFileTable[srcFileIdx], &name[1], 18);
             CloseF(&srcFil);
             InitF(&srcFil, "SOURCE", &name[1]);
             OpenF(&srcFil, 1);

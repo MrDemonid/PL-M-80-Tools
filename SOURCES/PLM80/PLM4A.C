@@ -628,7 +628,7 @@ static void SetNewAddr()
 
 void MiscCntrl()
 {
-    byte name[19];
+    byte name[20];
 
     switch (cfCode) {
     case T2_LIST: listOff = false; break;
@@ -647,7 +647,7 @@ void MiscCntrl()
             Fread(&tx1File, &name[13], 6);      /* Read() in name of include file */
             Fread(&tx1File, &name[6], 7);
             Fread(&tx1File, &name[0], 7);       /* overwrites the type byte */
-            memmove((pointer)&srcFileTable[srcFileIdx], name, 16);
+            memmove((pointer)&srcFileTable[srcFileIdx], &name[1], 18);
             CloseF(&srcFil);
             InitF(&srcFil, "SOURCE", &name[1]);
             OpenF(&srcFil, 1);

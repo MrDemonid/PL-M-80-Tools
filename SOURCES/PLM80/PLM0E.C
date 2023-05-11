@@ -300,12 +300,12 @@ static void LocYylex()
 
 void Yylex()
 {
-    static bool endToggle = false;  // relies on C's false = 0, true = 1
+    static byte endToggle = 0;
 
     if (yyAgain)
         yyAgain = false;
     else if (afterEOF)  // return alternating END and ; to allow recovery
-        tokenType = ENDorSEMICOLON[endToggle = !endToggle];
+        tokenType = ENDorSEMICOLON[endToggle ^= 1];
     else {
         LocYylex();
         if (tokenType == T_EOF) {

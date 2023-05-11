@@ -81,7 +81,7 @@ byte fatalErrorCode = 0;
 offset_t ov0Boundary = 0xA000;        // last address of ov0 rounded up to page boundary
 byte controls[8];
 //byte pad_3C4E[2];
-byte srcStemName[10];
+byte srcStemName[12];
 bool debugSwitches[26];
 offset_t cmdLineP;
 offset_t startCmdLineP;

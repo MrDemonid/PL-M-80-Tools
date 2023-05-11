@@ -60,7 +60,7 @@ enum {IOPEN = 0, ICLOSE = 1, IDELETE = 2, IREAD = 3, IWRITE = 4,
     ISEEK = 5, ILOAD = 6, IRENAME = 7, ICONSOL = 8, IEXIT = 9,
     IATTRIB = 10, IRESCAN = 11, IERROR = 12, IWHOCON = 13, ISPATH = 14};
 
-#define FILE_NAME_LEN   15
+#define FILE_NAME_LEN   17
 
 #define TAB 9
 #define CR  '\r'
@@ -452,7 +452,7 @@ typedef union {
 
 typedef struct {
     byte deviceId;
-    byte name[6];
+    byte name[8];
     byte ext[3];
     byte deviceType;
     byte driveType;
@@ -461,7 +461,7 @@ typedef struct {
 typedef struct {
     word aftn;
     byte sNam[6];
-    byte fNam[16];
+    byte fNam[18];
     pointer bufP;
     word bsize;
     word actual;
