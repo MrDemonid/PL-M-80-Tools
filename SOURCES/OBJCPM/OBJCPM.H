@@ -3,7 +3,7 @@
 
 typedef struct {
     unsigned char deviceId;
-    unsigned char name[6];
+    unsigned char name[8];
     unsigned char ext[3];
     unsigned char deviceType;
     unsigned char driveType;
