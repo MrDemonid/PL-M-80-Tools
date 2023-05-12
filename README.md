@@ -51,6 +51,7 @@ LOCATE:
 
 OBJCPM:
   - Support for paths as in ISIS-II
+  - The maximum file name is now 8 characters.
 
 PLM80:
   - Fixed all found errors.
