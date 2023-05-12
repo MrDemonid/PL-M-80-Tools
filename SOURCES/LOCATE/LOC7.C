@@ -1,5 +1,9 @@
 /****************************************************************************
- *  locate: C port of Intel's Locate v3.0                                   *
+ *  Locate v 4.0                                                            *
+ *  Copyright (C) 2023 Andrey Hlus                                          *
+ *                                                                          *
+ *  Created based on:                                                       *
+ *  C port of Intel's Locate v3.0                                           *
  *  Copyright (C) 2020 Mark Ogden <mark.pm.ogden@btinternet.com>            *
  *                                                                          *
  *  This program is free software; you can redistribute it and/or           *
@@ -148,7 +152,7 @@ void ProcArgsInit()
 
     /* display the sign on message skipping the form feed */
     ConStrOut(signonMsg + 1, 23);
-    ConStrOut(version, 4);
+    ConStrOut(locVersion, 4);
     ConStrOut(crlf, 2);
     /* if (we have run into the in buffer) we have a problem */
     if (cmdP > sibufP)
@@ -260,7 +264,7 @@ void ProcArgsInit()
     if (printfd > 0)
     {
         PrintString(signonMsg, 24);
-        PrintString(version, 4);
+        PrintString(locVersion, 4);
         PrintString(aInvokedBy, 14);
         PrintString(scmdP, (word)(cmdP - scmdP) + 2);
     }

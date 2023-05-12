@@ -1,5 +1,9 @@
 /****************************************************************************
- *  locate: C port of Intel's Locate v3.0                                   *
+ *  Locate v 4.0                                                            *
+ *  Copyright (C) 2023 Andrey Hlus                                          *
+ *                                                                          *
+ *  Created based on:                                                       *
+ *  C port of Intel's Locate v3.0                                           *
  *  Copyright (C) 2020 Mark Ogden <mark.pm.ogden@btinternet.com>            *
  *                                                                          *
  *  This program is free software; you can redistribute it and/or           *
@@ -23,6 +27,8 @@
 /*
  * vim:ts=4:shiftwidth=4:expandtab:
  */
+#include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
 #include "error.h"
@@ -30,6 +36,9 @@ typedef unsigned char byte;
 typedef unsigned short word;
 typedef byte *pointer;
 typedef word *wpointer;
+
+
+#define LEN_FILENAME  18 // полное имя(16 байт), байт длины и завершающий ноль
 
 // ISIS uses MemCk to return the top of memory
 // this is used to calculate a size for MEMORY seg
@@ -106,7 +115,7 @@ typedef union {
 
 typedef struct {
     byte deviceId;
-    byte name[6];
+    byte name[8];
     byte ext[3];
     byte deviceType;
     byte driveType;
@@ -345,7 +354,7 @@ extern byte tmpFileName[];
 extern pointer topDataFrags;
 extern pointer topHeap;
 extern bool usePrintBuf;
-extern byte version[];
+extern byte locVersion[];
 extern byte alin[];
 extern byte aMod[];
 extern byte aPub[];
@@ -482,3 +491,5 @@ void StrUpr(pointer pch);
 byte ToUpper(byte ch);
 void Write(word conn, pointer buffP, word count, wpointer statusP);
 void WriteBytes(pointer bufP, word cnt);
+
+void showVersion(FILE *fp, bool full);

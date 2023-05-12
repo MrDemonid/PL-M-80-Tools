@@ -43,9 +43,11 @@ LINK:
   - The ability to transfer parameters via a file.
     Example:
       link @:f1:fileparams.txt
+  - The maximum file name is now 8 characters.
 
 LOCATE:
   - Fixed all found errors.
+  - The maximum file name is now 8 characters.
 
 OBJCPM:
   - Support for paths as in ISIS-II

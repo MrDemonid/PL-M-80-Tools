@@ -1,5 +1,9 @@
 /****************************************************************************
- *  locate: C port of Intel's Locate v3.0                                   *
+ *  Locate v 4.0                                                            *
+ *  Copyright (C) 2023 Andrey Hlus                                          *
+ *                                                                          *
+ *  Created based on:                                                       *
+ *  C port of Intel's Locate v3.0                                           *
  *  Copyright (C) 2020 Mark Ogden <mark.pm.ogden@btinternet.com>            *
  *                                                                          *
  *  This program is free software; you can redistribute it and/or           *
@@ -29,8 +33,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include "version.h"
-void showVersion(FILE *fp, char *altName, bool full);
 
 #include <unistd.h>
 #include <errno.h>
@@ -129,7 +131,7 @@ static word ParseIsisName(spath_t *pInfo, const char *isisPath)
     pInfo->deviceType = deviceMap[i].devtype;
 
     if (pInfo->deviceType == 3) { // parse file name if file device
-        for (i = 0; i < 6 && isalnum(*isisPath); i++)
+        for (i = 0; i < 8 && isalnum(*isisPath); i++)
             pInfo->name[i] = toupper(*isisPath++);
         if (i == 0)
             return ERROR_BADFILENAME;
@@ -189,7 +191,7 @@ static word MapFile(osfile_t *osfileP, const char *isisPath)
     if (info.deviceType == 3) { // add file name
         char *s = strchr(osfileP->name, 0);     // get end of string
         int i;
-        for (i = 0; i < 6 && info.name[i]; i++)
+        for (i = 0; i < 8 && info.name[i]; i++)
             *s++ = tolower(info.name[i]);
         if (info.ext[0]) {
             *s++ = '.';
@@ -209,9 +211,10 @@ int main(int argc, char **argv)
     size_t len;
     char *s, *progname;
 
-    if (argc == 2 && _stricmp(argv[1], "-v") == 0) {
-        showVersion(stdout, "C port of Intel's ISIS-II LOCATE v3.0 -", argv[1][1] == 'V');
-        exit(0);
+    if (argc == 2 && _stricmp(argv[1], "-v") == 0)
+    {
+        showVersion(stdout, argv[1][1] == 'V');
+        exit(1);
     }
 #ifdef _WIN32
     (void)_setmode(_fileno(stdin), O_BINARY);

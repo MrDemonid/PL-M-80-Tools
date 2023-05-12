@@ -1,5 +1,9 @@
 /****************************************************************************
- *  asm80: C port of ASM80 v4.1                                             *
+ *  Locate v 4.0                                                            *
+ *  Copyright (C) 2023 Andrey Hlus                                          *
+ *                                                                          *
+ *  Created based on:                                                       *
+ *  C port of Intel's Locate v3.0                                           *
  *  Copyright (C) 2020 Mark Ogden <mark.pm.ogden@btinternet.com>            *
  *                                                                          *
  *  This program is free software; you can redistribute it and/or           *
@@ -23,25 +27,16 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <limits.h>
-#include "version.h"
+#include "loc.h"
 
-// use the following function declaration in the main code
-void showVersion(FILE *fp, char *altName, bool full);
+void showVersion(FILE *fp, bool full)
+{
+    fprintf(fp, "ISIS-II OBJECT LOCATER %s  (C) 2023 Andrey Hlus\n", locVersion);
 
-void showVersion(FILE *fp, char *altName, bool full) {
-    fputs(altName ? altName : GIT_APPNAME, fp);
-    fputs(" " GIT_VERSION, fp);
-#ifdef _DEBUG
-    fputs(" {debug}", fp);
-#endif
-    fputs("  (C)" GIT_YEAR " Mark Ogden\n", fp);
-    if (full) {
-        fprintf(fp, "%d bit target - Git: %s [%.10s]", (int)sizeof(void *) * CHAR_BIT, GIT_SHA1, GIT_CTIME);
-#if GIT_BUILDTYPE == 2
-        fputs(" +uncommitted files", fp);
-#elif GIT_BUILDTYPE == 3
-        fputs(" +untracked files", fp);
-#endif
-        fputc('\n', fp);
+    fputs("Created based on:\n", fp);
+    fputs("C port of Intel's ISIS-II LOCATE v3.0 - 0.2.0.X  (C)2020 Mark Ogden\n", fp);
+    if (full)
+    {
+        fputs("32 bit target - Git: untracked [2020-08-09] +untracked files\n", fp);
     }
 }

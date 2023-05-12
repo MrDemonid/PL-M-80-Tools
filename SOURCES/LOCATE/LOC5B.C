@@ -1,5 +1,9 @@
 /****************************************************************************
- *  locate: C port of Intel's Locate v3.0                                   *
+ *  Locate v 4.0                                                            *
+ *  Copyright (C) 2023 Andrey Hlus                                          *
+ *                                                                          *
+ *  Created based on:                                                       *
+ *  C port of Intel's Locate v3.0                                           *
  *  Copyright (C) 2020 Mark Ogden <mark.pm.ogden@btinternet.com>            *
  *                                                                          *
  *  This program is free software; you can redistribute it and/or           *
@@ -25,12 +29,11 @@
 pointer PastFileName(pointer pch)
 {
 
-        while (*pch == ':' || *pch == '.'
+        while (*pch == '_' || *pch == ':' || *pch == '.'
            || ('0' <= *pch && *pch <= '9')
            || ('A' <= *pch && *pch <= 'Z')) {
                 pch = pch + 1;
         }
         return pch;
 } /* PastFileName */
-
 

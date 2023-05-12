@@ -1,5 +1,9 @@
 /****************************************************************************
- *  locate: C port of Intel's Locate v3.0                                   *
+ *  Locate v 4.0                                                            *
+ *  Copyright (C) 2023 Andrey Hlus                                          *
+ *                                                                          *
+ *  Created based on:                                                       *
+ *  C port of Intel's Locate v3.0                                           *
  *  Copyright (C) 2020 Mark Ogden <mark.pm.ogden@btinternet.com>            *
  *                                                                          *
  *  This program is free software; you can redistribute it and/or           *
@@ -39,7 +43,7 @@ void MakeFullName(spath_t *pinfo, pointer pstr)
         pstr[3] = ':';
         pstr = pstr + 4;        /* past the :xx: inserted */
         /* put the file */
-        for (i = 0; i <= 5; i++) {
+        for (i = 0; i < 8; i++) {
                 if ((*pstr = pinfo->name[i]) != 0 )
                         pstr = pstr + 1;
         }
@@ -50,7 +54,7 @@ void MakeFullName(spath_t *pinfo, pointer pstr)
                 pstr = pstr + 1;
         }
         /* put the ext - could have been in the if (clause above */
-        for (i = 0; i <= 2; i++) {
+        for (i = 0; i < 3; i++) {
                 if ((*pstr = pinfo->ext[i]) != 0 )
                         pstr = pstr + 1;
         }

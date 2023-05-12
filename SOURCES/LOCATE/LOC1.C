@@ -1,5 +1,9 @@
 /****************************************************************************
- *  locate: C port of Intel's Locate v3.0                                   *
+ *  Locate v 4.0                                                            *
+ *  Copyright (C) 2023 Andrey Hlus                                          *
+ *                                                                          *
+ *  Created based on:                                                       *
+ *  C port of Intel's Locate v3.0                                           *
  *  Copyright (C) 2020 Mark Ogden <mark.pm.ogden@btinternet.com>            *
  *                                                                          *
  *  This program is free software; you can redistribute it and/or           *
@@ -29,14 +33,14 @@
 static byte copyright[] = "(C) 1976, 1977, 1979 INTEL CORP";
 #pragma on(unreferenced)
 
-byte version[] = "V3.0";
+byte locVersion[] = "V4.0";
 static byte nullRec[] = {0,0,0};
 static word_t pageOutOffset = { .w = 0 };
 static word_t cachePageOffset = { .w = 0 };
 
 word readfd, outputfd, printfd, tmpfd, statusIO, actRead;
-byte inFileName[16], outFileName[16];
-byte printFileName[16], tmpFileName[16];
+byte inFileName[LEN_FILENAME], outFileName[LEN_FILENAME];
+byte printFileName[LEN_FILENAME], tmpFileName[LEN_FILENAME];
 byte columns;
 seen_t seen;    /* START, STACK, RESTART0, MAP, PUBLICS, SYMBOLS, LINES, PURGE, NAME */
 byte moduleName[32];
