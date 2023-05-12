@@ -126,7 +126,7 @@ static word ParseIsisName(spath_t *pInfo, const char *isisPath)
     pInfo->deviceType = deviceMap[i].devtype;
 
     if (pInfo->deviceType == 3) { // parse file name if file device
-        for (i = 0; i < 6 && isalnum(*isisPath); i++)
+        for (i = 0; i < 8 && isalnum(*isisPath); i++)
             pInfo->name[i] = toupper(*isisPath++);
         if (i == 0)
             return ERROR_BADFILENAME;
@@ -186,7 +186,7 @@ static word MapFile(osfile_t *osfileP, const char *isisPath)
     if (info.deviceType == 3) { // add file name
         char *s = strchr(osfileP->name, 0);     // get end of string
         int i;
-        for (i = 0; i < 6 && info.name[i]; i++)
+        for (i = 0; i < 8 && info.name[i]; i++)
             *s++ = tolower(info.name[i]);
         if (info.ext[0]) {
             *s++ = '.';

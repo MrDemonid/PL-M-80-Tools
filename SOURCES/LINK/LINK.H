@@ -27,6 +27,8 @@
 #include "error.h"
 
 
+#define FULL_NAME_LEN   16
+
 
 typedef unsigned char byte;
 typedef unsigned short word;
@@ -107,7 +109,7 @@ typedef union {
 
 typedef struct {
     byte deviceId;
-    byte name[6];
+    byte name[8];
     byte ext[3];
     byte deviceType;
     byte driveType;
@@ -376,7 +378,7 @@ extern word modEndOffset;
 extern byte modEndSegId;
 extern pointer eoutP;
 extern pointer erecP;
-extern byte filePath[16];
+extern byte filePath[FULL_NAME_LEN+2]; // длина имени + байт длины + завершающий ноль
 extern symbol_t *hashTab[128];
 extern symbol_t *headSegOrderLink;
 extern symbol_t *headUnresolved;
@@ -384,10 +386,10 @@ extern word inBlk;
 extern pointer inbP;
 extern word inByt;
 extern byte inCRC;
-extern byte inFileName[16];
+extern byte inFileName[FULL_NAME_LEN+2];
 extern pointer inP;
 extern record_t *inRecordP;
-extern byte linkTmpFile[16];
+extern byte linkTmpFile[FULL_NAME_LEN+2];
 extern word maxExternCnt;
 extern byte outTranId;
 extern byte outTranVn;
@@ -397,7 +399,7 @@ extern word npbuf;
 extern library_t *objFileHead;
 extern pointer outP;
 extern word pad_4565;
-extern byte printFileName[16];
+extern byte printFileName[FULL_NAME_LEN+2];
 extern word printFileNo;
 extern word inFile;
 extern byte recErrMsg[40];
@@ -411,7 +413,7 @@ extern word statusIO;
 extern symbol_t *symbolP;
 extern word tmpfilefd;
 extern word tofilefd;
-extern byte toFileName[16];
+extern byte toFileName[FULL_NAME_LEN+2];
 extern pointer topHeap;
 extern word unresolved;
 extern byte VERSION[5];

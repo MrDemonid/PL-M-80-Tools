@@ -32,11 +32,11 @@ word pad_4565;
 word tmpfilefd;
 word statusIO;
 word actRead;
-byte inFileName[16];
-byte toFileName[16];
-byte printFileName[16];
-byte filePath[16];
-byte linkTmpFile[16];
+byte inFileName[FULL_NAME_LEN+2];   // длина имени + байт длины + завершающий ноль
+byte toFileName[FULL_NAME_LEN+2];
+byte printFileName[FULL_NAME_LEN+2];
+byte filePath[FULL_NAME_LEN+2];
+byte linkTmpFile[FULL_NAME_LEN+2];
 bool mapWanted;
 byte outModuleName[32];
 byte modEndModTyp;
