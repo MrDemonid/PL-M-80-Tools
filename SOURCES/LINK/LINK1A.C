@@ -29,14 +29,14 @@
 pointer GetHigh(word count)
 {
     if (topHeap - membot < count)
-        FileError(ERR210, &toFileName[1], TRUE);    /* Insufficient() memory */
+        fatal_FileIO(ERR210, &toFileName[1], TRUE);    /* Insufficient() memory */
     return (membot = membot + count) - count;
 } /* GetHigh() */
 
 pointer GetLow(word count)
 {
     if (topHeap - membot < count)
-        FileError(ERR210, &toFileName[1], TRUE);    /* Insufficient() memory */
+        fatal_FileIO(ERR210, &toFileName[1], TRUE);    /* Insufficient() memory */
     return (topHeap = topHeap - count);
 } /* GetLow() */
 
@@ -50,12 +50,12 @@ void ChkRead(word cnt)
     {
         memmove(sbufP, bufP, bcnt);
         Read(inFile, sbufP + bcnt, npbuf - bcnt, &actRead, &statusIO);
-        FileError(statusIO, &inFileName[1], TRUE);
+        fatal_FileIO(statusIO, &inFileName[1], TRUE);
         /* calculate new inBlk and inByt */
         inBlk = inBlk + (word)(inByt + bufP - sbufP) / 128;
         inByt = (inByt + bufP - sbufP) % 128;
         if ((bcnt = bcnt + actRead) < cnt)
-            FileError(ERR204, &inFileName[1], TRUE);    /* Premature() eof */
+            fatal_FileIO(ERR204, &inFileName[1], TRUE);    /* Premature() eof */
         /* mark the new end */
         ebufP = (bufP = sbufP) + bcnt;
     }
@@ -81,26 +81,26 @@ void GetRecord()
             ChkRead(bcnt + 1);
             inRecordP = (record_t *)bufP;
             if ((erecP = ((pointer)inRecordP) + inRecordP->reclen + 2) >= ebufP) /* redundant - done in ChkRead() */
-                FileError(ERR204, &inFileName[1], TRUE);    /* premature eof */
+                fatal_FileIO(ERR204, &inFileName[1], TRUE);    /* premature eof */
         }
     recLen = inRecordP->reclen;
     inP =  inRecordP->record;
     bufP = erecP + 1;
     recNum = recNum + 1;
     if (inRecordP->rectyp > R_COMDEF || (inRecordP->rectyp & 1))    /* > 0x2E || odd */
-        IllegalRelo();
+        fatal_RelocRec();
     if (inRecordP->rectyp == R_MODDAT)          /* content handled specially */
         return;
     if (inRecordP->rectyp >= R_LIBLOC  && inRecordP->rectyp <= R_LIBDIC)
         return;                     /* library records handled specially */
     if (recLen > 1025)
-        FatalErr(ERR211);   /* record too long */
+        fatal_Error(ERR211);   /* record too long */
     inCRC = 0;                  /* test checksum */
     for (inbP = (pointer)inRecordP; inbP <= erecP; inbP++) {
         inCRC = inCRC + *inbP;
     }
     if (inCRC != 0)
-        FatalErr(ERR208);   /* checksum Error() */
+        fatal_Error(ERR208);   /* checksum Error() */
 } /* GetRecord() */
 
 void Position(word blk, word byt)
@@ -113,7 +113,7 @@ void Position(word blk, word byt)
             return;
     }
     Seek(inFile, 2, &blk, &byt, &statusIO);     /* Seek() on disk */
-    FileError(statusIO, &inFileName[1], true);
+    fatal_FileIO(statusIO, &inFileName[1], true);
     recNum = 0;                     /* reset vars and Read() at least 1 byte */
     bufP = ebufP;
     ChkRead(1);
@@ -121,12 +121,18 @@ void Position(word blk, word byt)
     inByt = byt;
 } /* Position() */
 
-void OpenObjFile()
+void OpenObjFile(bool show)
 {
     Pstrcpy(curObjFile->name, &inFileName[0]);      /* copy the user supplied file name */
+    if (show)
+    {
+        ConOutStr("  + ", 4);
+        ConOutStr(&inFileName[1], inFileName[0]);
+        ConOutStr("\n", strlen("\n"));
+    }
     inFileName[inFileName[0]+1] = ' ';          /* terminate with a space */
     Open(&inFile, &inFileName[1], 1, 0, &statusIO); /* Open() the file */
-    FileError(statusIO, &inFileName[1], TRUE);
+    fatal_FileIO(statusIO, &inFileName[1], TRUE);
     recNum = 0;
     curModule = 0;                  /* reset vars and Read() at least 1 byte */
     bufP = ebufP;
@@ -137,7 +143,7 @@ void OpenObjFile()
 void CloseObjFile()
 {                   /* Close() file and link to next one */
     Close(inFile, &statusIO);
-    FileError(statusIO, &inFileName[1], TRUE);
+    fatal_FileIO(statusIO, &inFileName[1], TRUE);
     curObjFile = curObjFile->link;
 } /* CloseObjFile() */
 

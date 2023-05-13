@@ -104,7 +104,7 @@ byte ReadName()
     ChkRead(*inP + 1);      /* check all of the name is there */
     inP = bufP;         /* in case it has moved */
     if (recLen < *inP + 1)  /* overran */
-        IllFmt();
+        fatal_RecFormat();
     bufP = bufP + *inP + 1; /* past name */
     recLen = recLen - (*inP + 1);   /* account for name */
                     /* inP points to the name */
@@ -115,7 +115,7 @@ byte ReadName()
 void ReadBlkByt()
 {
     if (recLen < 4)
-        IllFmt();
+        fatal_RecFormat();
     ChkRead(4);
     bufP = (inP = bufP) + 4;
     recLen = recLen - 4;
@@ -127,7 +127,7 @@ void ExpectType(byte type)
     GetRecord();
     recNum = 0;
     if (type != inRecordP->rectyp)
-        BadRecordSeq();
+        fatal_RecSeq();
 } /* ExpectType() */
 
 /* print segment base, Size() and alignment */
@@ -299,7 +299,7 @@ void P1CommonSegments()
     if (curSeg == SEG_BLANK)    /* blank common */
     {
         if (segUsed[0]) /* record seen in slot 0 */
-            IllFmt();
+            fatal_RecFormat();
         segUsed[0] = true;
         if (inSegLen > segLen[0])   /* record max Size() */
             segLen[0] = inSegLen;
@@ -320,7 +320,7 @@ void P1CommonSegments()
             noCommonSeen = 0;
         }
         if (comSegInfoP[curSeg].combine != AUNKNOWN)    /* duplicate */
-            IllFmt();
+            fatal_RecFormat();
         comSegInfoP[curSeg].combine = inSegCombine; /* save combine and Size() */
         comSegInfoP[curSeg].lenOrLinkedSeg = inSegLen;
     }
@@ -331,10 +331,10 @@ void P1StdSegments()
     word prevLen, segLoadBase;
 
     if (segUsed[curSeg])        /* duplicate seg Size() info */
-        IllFmt();
+        fatal_RecFormat();
     segUsed[curSeg] = 0xFF;     /* note seen */
     if (curSeg == SEG_ABS || curSeg > SEG_MEMORY)
-        IllFmt();
+        fatal_RecFormat();
     if (inSegLen == 0)      /* nothing to do */
         return;
     if (curSeg == SEG_CODE || curSeg == SEG_DATA)
@@ -372,7 +372,7 @@ void P1StdSegments()
             if ((segLoadBase = segLoadBase - inSegLen) > prevLen)   /* backup to start of this Load() address */
                 CreateFragment(curSeg, prevLen, segLoadBase - 1);   /* not contiguous so create fragment */
             if (segLen[curSeg] < segLoadBase)               /* oops we went over 64k */
-                FatalErr(ERR221);   /* segment too large */
+                fatal_Error(ERR221);   /* segment too large */
         }
         if (curSeg == SEG_CODE)     /* update the code / data base address */
             curModule->scode = segLoadBase;
@@ -405,12 +405,12 @@ byte SelectInSeg(byte seg)
     else if (seg >= SEG_NAMCOM && seg != SEG_BLANK)
     {
         if (noCommonSeen)   /* selecting common when none exists !! */
-            IllFmt();
+            fatal_RecFormat();
         if (comSegInfoP[seg].combine == ANONE)  /* named common has been seen so ok */
             return (byte)comSegInfoP[seg].lenOrLinkedSeg;
         if (comSegInfoP[seg].combine != AUNKNOWN)
-            BadRecordSeq();
-        IllFmt();
+            fatal_RecSeq();
+        fatal_RecFormat();
     }
     return seg;
 } /* SelectInSeg() */
@@ -418,7 +418,7 @@ byte SelectInSeg(byte seg)
 void P1ModHdr()
 {
     if (haveModuleHdr)          /* catch multiple header errors */
-        BadRecordSeq();
+        fatal_RecSeq();
     haveModuleHdr = true;
     nxtSymbolP = (symbol_t *)&curModule->symlist;
     if (publicsMode)            /* ! loading data */
@@ -443,7 +443,7 @@ void P1ModHdr()
     }
     while (inP < erecP) {       /* while more segments */
         if ((inSegCombine = ((segdef_t *)inP)->combine) - 1 > 2)    /* only AINPAGE - ABYTE valid */
-            IllFmt();
+            fatal_RecFormat();
         inSegLen = ((segdef_t *)inP)->len;
         if ((curSeg = ((segdef_t *)inP)->segId) >= SEG_NAMCOM)
             P1CommonSegments();
@@ -470,7 +470,7 @@ void P1ModEnd()
     if (! noCommonSeen) /* check common alignments */
         for (segI = 0; segI <= 255; segI++) {
             if (comSegInfoP[segI].combine + 1 > 1)  /* only AUNKNOWN & ANONE valid */
-                BadRecordSeq();
+                fatal_RecSeq();
         }
 } /* P1ModEnd() */
 
@@ -486,20 +486,20 @@ void Pass1CONTENT()
         else                        /* relocatable record */
         {
             if (recLen > 1025)      /* only abs > 1025 */
-                FatalErr(ERR211);   /* record too long */
+                fatal_Error(ERR211);   /* record too long */
             if (curSeg == SEG_STACK)
-                FatalErr(ERR238);   /* illegal stack content record */
+                fatal_Error(ERR238);   /* illegal stack content record */
             if (curSeg < SEG_NAMCOM)
             {
                 if (! segUsed[curSeg])  /* seg was ! defined in modhdr */
-                    IllFmt();
+                    fatal_RecFormat();
             }
             else
             {
                 if (curSeg == 0xFF) /* blank common */
                 {
                     if (! segUsed[0])   /* set was ! defined in modhdr */
-                        IllFmt();
+                        fatal_RecFormat();
                 }
                 else
                     curSeg = SelectInSeg(curSeg);
@@ -514,12 +514,12 @@ void Pass1COMDEF()
     if (publicsMode)    /* ! needed */
         return;
     if (noCommonSeen)   /* can't have common def if no common segments */
-        BadRecordSeq();
+        fatal_RecSeq();
     while (inP < erecP) {
         if ((curSeg = ((comnam_t *)inP)->segId) < SEG_NAMCOM || curSeg == SEG_BLANK)    /* ! a named common */
-            IllFmt();
+            fatal_RecFormat();
         if (comSegInfoP[curSeg].combine + 1 < 2)    /* AUNKNOWN && ANONE invalid */
-            IllFmt();
+            fatal_RecFormat();
         if (Lookup(((comnam_t *)inP)->name, &comdefInfoP, F_ALNMASK))   /* already exist ? */
         {
             /* if (! both ABYTE) make APAGE */
@@ -541,7 +541,7 @@ void Pass1COMDEF()
             comdefInfoP->hashLink = 0;
             comdefInfoP->flags = comSegInfoP[curSeg].combine;   /* save the combine value */
             if (segToUse < SEG_NAMCOM)  /* check we haven't created too many segs in the linked file */
-                FatalErr(ERR236);   /* too many common segments */
+                fatal_Error(ERR236);   /* too many common segments */
             comdefInfoP->linkedSeg = segToUse;  /* record the linked seg for this segment */
             segToUse = segToUse - 1;
             Pstrcpy(((comnam_t *)inP)->name, comdefInfoP->name);    /* copy the name */
@@ -643,29 +643,29 @@ void P1Records(byte newModule)
     moreRecords = true;
     while (moreRecords) {
         switch (inRecordP->rectyp) {
-        case 0x00: IllegalRelo(); break;    /* 0 */
+        case 0x00: fatal_RelocRec(); break;    /* 0 */
         case 0x02: P1ModHdr(); break;       /* R_MODHDR */
         case 0x04: P1ModEnd(); break;       /* R_MODEND */
         case 0x06: Pass1CONTENT(); break;   /* R_CONTENT */
         case 0x08: break;           /* R_LINENO */
-        case 0x0A: IllegalRelo(); break;    /* 0A */
-        case 0x0C: IllegalRelo(); break;    /* 0C */
-        case 0x0E: FileError(ERR204, &inFileName[1], true); break;  /* Premature() R_EOF */
+        case 0x0A: fatal_RelocRec(); break;    /* 0A */
+        case 0x0C: fatal_RelocRec(); break;    /* 0C */
+        case 0x0E: fatal_FileIO(ERR204, &inFileName[1], true); break;  /* Premature() R_EOF */
         case 0x10: break;           /* R_ANCESTOR */
         case 0x12: break;           /* R_LOCALS */
-        case 0x14: IllegalRelo(); break;    /* 14 */
+        case 0x14: fatal_RelocRec(); break;    /* 14 */
         case 0x16: Pass1PUBNAMES(); break;  /* R_PUBLICS */
         case 0x18: Pass1EXTNAMES(); break;  /* R_EXTNAMES */
-        case 0x1A: IllegalRelo(); break;    /* 1A */
-        case 0x1C: IllegalRelo(); break;    /* 1C */
-        case 0x1E: IllegalRelo(); break;    /* 1E */
+        case 0x1A: fatal_RelocRec(); break;    /* 1A */
+        case 0x1C: fatal_RelocRec(); break;    /* 1C */
+        case 0x1E: fatal_RelocRec(); break;    /* 1E */
         case 0x20: break;           /* R_EXTREF */
         case 0x22: break;           /* R_RELOC */
         case 0x24: break;           /* R_INTERSEG */
-        case 0x26: BadRecordSeq(); break;   /* R_LIBLOCS */
-        case 0x28: BadRecordSeq(); break;   /* R_LIBNAMES */
-        case 0x2A: BadRecordSeq(); break;   /* R_LIBDICT */
-        case 0x2C: BadRecordSeq(); break;   /* R_LIBHDR */
+        case 0x26: fatal_RecSeq(); break;   /* R_LIBLOCS */
+        case 0x28: fatal_RecSeq(); break;   /* R_LIBNAMES */
+        case 0x2A: fatal_RecSeq(); break;   /* R_LIBDICT */
+        case 0x2C: fatal_RecSeq(); break;   /* R_LIBHDR */
         case 0x2E: Pass1COMDEF(); break;    /* R_COMDEF */
         }
         GetRecord();
@@ -674,7 +674,7 @@ void P1Records(byte newModule)
         maxExternCnt = externCnt;
     /* make sure next record is valid or eof */
     if (inRecordP->rectyp != R_MODEOF && inRecordP->rectyp != R_MODHDR && inRecordP->rectyp != R_LIBNAM)
-        FatalErr(ERR220);   /* no eof */
+        fatal_Error(ERR220);   /* no eof */
 } /* P1Records() */
 
 void P1LibScan()
@@ -826,7 +826,7 @@ void Phase1()
     curObjFile = objFileHead;
     while (curObjFile)
     {   /* process each item in the Input() list */
-        OpenObjFile();      /* Open() the file */
+        OpenObjFile(TRUE);    /* Open() the file */
         publicsMode = curObjFile->publicsMode;
         GetRecord();            /* Load() the first record */
         if (inRecordP->rectyp == R_LIBHDR)  /* library? */
@@ -841,16 +841,16 @@ void Phase1()
             if (inRecordP->rectyp == R_MODHDR)  /* simple object file */
             {
                 if (curObjFile->hasModules) /* oops user thought it was a library */
-                    FatalErr(ERR235);   /* not a library */
+                    fatal_Error(ERR235);   /* not a library */
                 hmoduleP = (module_t *)&curObjFile->modList;
                 while (inRecordP->rectyp == R_MODHDR) { /* process each module in file */
                     P1Records(true);    /* this is a new module */
                 }
                 if (inRecordP->rectyp != R_MODEOF)
-                    FatalErr(ERR220);   /* no eof */
+                    fatal_Error(ERR220);   /* no eof */
             }
             else
-                FatalErr(ERR239);   /* no module header record */
+                fatal_Error(ERR239);   /* no module header record */
         }
         CloseObjFile();
     }

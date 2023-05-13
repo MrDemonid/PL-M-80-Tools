@@ -38,7 +38,7 @@ static byte linkTmpTemplate[] = "\0LINK\0\0TMP";
 static pointer scmdP;
 static pointer cmdP;
 
-void FatalCmdLineErr(word errCode)
+void fatal_CmdLine(word errCode)
 {
     if (Delimit(cmdP) == cmdP)
     {               /* isn't a filename so a single char */
@@ -53,7 +53,7 @@ void FatalCmdLineErr(word errCode)
     ConOutStr(scmdP, (word)(cmdP - scmdP + 1));
     ConOutStr(CRLF, 2);
     Exit();
-} /* FatalCmdLineErr() */
+} /* fatal_CmdLine() */
 
 
 void SkipNonArgChars(pointer s)
@@ -72,7 +72,7 @@ void ExpectChar(byte ch, byte errCode)
     if (*cmdP == ch)
         SkipNonArgChars(cmdP+1);
     else
-        FatalCmdLineErr(errCode);
+        fatal_CmdLine(errCode);
 } /* ExpectChar() */
 
 
@@ -98,29 +98,29 @@ void CheckFile()
 {
     Spath(cmdP, &info, &statusIO);
     if (statusIO > 0)
-        FatalCmdLineErr(statusIO);
+        fatal_CmdLine(statusIO);
     SkipNonArgChars(Delimit(cmdP));
 } /* CheckFile() */
 
 
-void ErrNotDiscFile()
+void fatal_NoDiskFile()
 {
     MakeFullName(&info, &inFileName[1]);
-    FileError(ERR17, &inFileName[1], true); /* not a disk file */
-} /* ErrNotDiscFile() */
+    fatal_FileIO(ERR17, &inFileName[1], true); /* not a disk file */
+} /* fatal_NoDiskFile() */
 
 
 void GetModuleName(pointer pstr)
 {
 
     if (*cmdP < '?' || *cmdP > 'Z')
-        FatalCmdLineErr(ERR225);    /* invalid name */
+        fatal_CmdLine(ERR225);    /* invalid name */
     pstr[0] = 0;
 
     while ('0' <= *cmdP && *cmdP <= '9' || '?' <= *cmdP && *cmdP <= 'Z') {
         pstr[0] = pstr[0] + 1;
         if (pstr[0] > 31)
-            FatalCmdLineErr(ERR226);    /* name too long */
+            fatal_CmdLine(ERR226);    /* name too long */
         pstr[pstr[0]] = *cmdP;
         cmdP = cmdP + 1;
     }
@@ -156,14 +156,14 @@ void GetInputListItem()
         ChkLP();            /* (file */
         CheckFile();
         if (info.deviceType != 3)   /* must be disk file */
-            ErrNotDiscFile();
+            fatal_NoDiskFile();
         AddFileToInputList();
         curObjFile->publicsMode = true; /* record PUBLICS */
         while (*cmdP == ',') {      /* process any more PUBLICS files */
             ExpectComma();
             CheckFile();
             if (info.deviceType != 3)
-                ErrNotDiscFile();
+                fatal_NoDiskFile();
             AddFileToInputList();
             curObjFile->publicsMode = true;
         }
@@ -173,7 +173,7 @@ void GetInputListItem()
     {
         CheckFile();            /* check we have a disk file */
         if (info.deviceType != 3)
-            ErrNotDiscFile();
+            fatal_NoDiskFile();
         AddFileToInputList();
         if (*cmdP == '(')       /* check if we have a module list */
         {
@@ -224,7 +224,7 @@ void ParseControl()
         }
 
     if (j == 0)     /* ! found */
-        FatalCmdLineErr(ERR229);    /* Unrecognised() control */
+        fatal_CmdLine(ERR229);    /* Unrecognised() control */
     SkipNonArgChars(cmdP + k);  /* past the control */
     switch (j) {
     case 1: mapWanted = true; break;    /* MAP */
@@ -247,7 +247,7 @@ void ParseControl()
 void ReadCmdLine()
 {
     Read(1, cmdP, MAXFL-4, &actRead, &statusIO);
-    FileError(statusIO, cin, true);
+    fatal_FileIO(statusIO, cin, true);
     cmdP[actRead] = '\r';
     CrStrUpper(cmdP);
 } /* ReadCmdLine() */
@@ -289,7 +289,7 @@ void ParseCmdLine()
             p.bp = cmdP;    /* mark where the & is */
             cmdP = Deblank(cmdP + 1);
             if (*cmdP != '\r')
-                FatalCmdLineErr(ERR203);    /* invalid syntax */
+                fatal_CmdLine(ERR203);    /* invalid syntax */
             cmdP = p.bp;    /* back to the & */
             ConOutStr("**", 2); /* prompt user for more */
             cmdP[1] = '\r';     /* put the \r\n** in the buffer */
@@ -321,7 +321,7 @@ void ParseCmdLine()
         q = cmdP;               /* start of filename */
         CheckFile();                /* target must be a disk file or :BB: */
         if (info.deviceType != 3 && info.deviceId != 22) /* file || :BB: */
-            ErrNotDiscFile();
+            fatal_NoDiskFile();
         cmdP = q;               /* reset */
         MakeFullName(&info, &toFileName[1]);    /* get the full filename */
         toFileName[0] = (byte)(Delimit(&toFileName[1]) - &toFileName[1]);
@@ -329,13 +329,13 @@ void ParseCmdLine()
         while (curObjFile)
         {
             if (Strequ(toFileName, curObjFile->name, toFileName[0] + 1) && ! curObjFile->publicsMode)
-                FatalCmdLineErr(ERR234);    /* Duplicate() file name */
+                fatal_CmdLine(ERR234);    /* Duplicate() file name */
             curObjFile = curObjFile->link;
         }
         SkipNonArgChars(Delimit(cmdP));
     }
     else
-        FatalCmdLineErr(ERR233);    /* 'to' expected */
+        fatal_CmdLine(ERR233);    /* 'to' expected */
 
     /* put the temp file on the same disk as the target (or :BB:) */
     linkTmpTemplate[0] = info.deviceId;
@@ -374,7 +374,7 @@ void ParseCmdLine()
     headUnresolved = 0;
     /* Open() print file (could be console) */
     Open(&printFileNo, &printFileName[1], 2, 0, &statusIO);
-    FileError(statusIO, &printFileName[1], TRUE);
+    fatal_FileIO(statusIO, &printFileName[1], TRUE);
     /* if (printing to other than console, log the login & command line */
     if (printFileNo > 0)
     {

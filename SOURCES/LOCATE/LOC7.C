@@ -34,10 +34,10 @@ word ParseLPNumRP()
 
     ExpectLP();
     if (*cmdP < '0' || '9' < *cmdP) /* must have digit */
-        CmdErr(ERR203); /* invalid syntax */
+        fatal_CmdErr(ERR203); /* invalid syntax */
     num = ParseNumber(&cmdP);
     if (PastFileName(cmdP) != cmdP) /* make sure ! a filename || bad number */
-        CmdErr(ERR203); /* invalid syntax */
+        fatal_CmdErr(ERR203); /* invalid syntax */
     ExpectRP();
     return num;
 } /* ParseLPNumRP */
@@ -57,7 +57,7 @@ byte GetCommonSegId()
     while (1) {
         GetRecord();
         if (inRecordP->rectyp != R_COMDEF)
-            ErrChkReport(ERR237, &name[1], true);   /* common not found */
+            fatal_FileIO(ERR237, &name[1], true);   /* common not found */
         while (inP < erecP) {
             if (Strequ(name, ((comnam_t *)inP)->name, name[0]+1))
                 return ((comnam_t *)inP)->segId;
@@ -75,7 +75,7 @@ void InsSegIdOrder(byte seg)
         return;
     for (i = 0; i <= nxtSegOrder; i++) {
         if (segOrder[i] == seg) /* alReady Allocated() ? */
-            CmdErr(ERR203); /* invalid syntax */
+            fatal_CmdErr(ERR203); /* invalid syntax */
     }
     for (i = nxtSegOrder + 1; i <= SBLANK - 1; i++) {   /* find the current location of seg */
         if (segOrder[i] == seg)
@@ -94,7 +94,7 @@ void ReadCmdLine()
 {
 
     Read(1, cmdP, 128, &actRead, &statusIO);
-    ErrChkReport(statusIO, cin, true);
+    fatal_FileIO(statusIO, cin, true);
     cmdP[actRead] = '\r';
     StrUpr(cmdP);
 } /* ReadCmdLine */
@@ -136,7 +136,7 @@ void ProcArgsInit()
             p.bp = cmdP;    /* mark the & */
             cmdP = SkipSpc(cmdP + 1);   /* check we didn't have anything after */
             if (*cmdP != '\r')
-                CmdErr(ERR203); /* invalid syntax */
+                fatal_CmdErr(ERR203); /* invalid syntax */
             cmdP = p.bp;    /* reset to & */
             ConStrOut(mstar2, 2);   /* emit ** to user */
             cmdP[1] = '\r'; /* put the cr lf ** after the & */
@@ -156,7 +156,7 @@ void ProcArgsInit()
     ConStrOut(crlf, 2);
     /* if (we have run into the in buffer) we have a problem */
     if (cmdP > sibufP)
-        CmdErr(ERR210); /* insufficient memory */
+        fatal_CmdErr(ERR210); /* insufficient memory */
     /* skip the leading space of the command args */
     SkipNonArgChars(argsP);
     /* get the file we are locating */
@@ -167,6 +167,11 @@ void ProcArgsInit()
     MakeFullName(&spathInfo, &inFileName[1]);
     /* convert to a omf style string by putting the length in at the front */
     inFileName[0] = (byte)(PastFileName(&inFileName[1]) - &inFileName[1]);
+    // выводим имя входящего файла
+    ConStrOut("  IN:  ", 7);
+    ConStrOut(&inFileName[1], inFileName[0]);
+    ConStrOut("\n", strlen("\n"));
+
     /* check for TO (followed by space or & */
     if (Strequ(cmdP, mto, 3) || Strequ(cmdP, mtoand, 3))
     {
@@ -176,7 +181,7 @@ void ProcArgsInit()
     else
     {   /* handle the case of TO missing unless the input did not have an extension */
         if (spathInfo.ext[0] == 0)
-            CmdErr(ERR233); /* TO expected */
+            fatal_CmdErr(ERR233); /* TO expected */
         spathInfo.ext[0] = 0;   /* assume TO would be input file name without extension */
         spathInfo.ext[1] = 0;
         spathInfo.ext[2] = 0;
@@ -184,6 +189,11 @@ void ProcArgsInit()
     /* get the output file name in standard format */
     MakeFullName(&spathInfo, &outFileName[1]);
     outFileName[0] = (byte)(PastFileName(&outFileName[1]) - &outFileName[1]);
+    // выводим имя конечного файла
+    ConStrOut("  OUT: ", 7);
+    ConStrOut(&outFileName[1], outFileName[0]);
+    ConStrOut("\n", strlen("\n"));
+
     /* only accept a disk file or the bit bucket */
     if (spathInfo.deviceType != 3 && spathInfo.deviceId != 22)  /* 22 -> :BB: */
         ErrNotADisk();
@@ -195,12 +205,12 @@ void ProcArgsInit()
     outRealFile = spathInfo.deviceId != 22;
     /* Open() the file to locate */
     Open(&readfd, &inFileName[1], 1, 0, &statusIO);
-    ErrChkReport(statusIO, &inFileName[1], true);
+    fatal_FileIO(statusIO, &inFileName[1], true);
     recNum = 0;
     /* check we have a relocation file */
     GetRecord();
     if (inRecordP->rectyp != R_MODHDR)
-        ErrChkReport(ERR239, &inFileName[1], true); /* no module header record */
+        fatal_FileIO(ERR239, &inFileName[1], true); /* no module header record */
     /* assume listing to :CO: */
     PStrcpy(cout, printFileName);
     /* set other defaults and record that we haven't seen the commands */
@@ -256,10 +266,10 @@ void ProcArgsInit()
     /* create the output file*/
     Delete(&outFileName[1], &statusIO);
     Open(&outputfd, &outFileName[1], 3, 0, &statusIO);
-    ErrChkReport(statusIO, &outFileName[1], true);
+    fatal_FileIO(statusIO, &outFileName[1], true);
     /* and the print file (or console) */
     Open(&printfd, &printFileName[1], 2, 0, &statusIO);
-    ErrChkReport(statusIO, &printFileName[1], true);
+    fatal_FileIO(statusIO, &printFileName[1], true);
     /* if (! console) emit the signon && command line to the print file */
     if (printfd > 0)
     {
@@ -307,7 +317,7 @@ void ProcModhdr()
     loadHasSize = 0;
     while (inP < erecP) {       /* process all of the seg info */
         if ((segFlags[segId = ((segdef_t *)inP)->segId] & AMASK) != AUNKNOWN)
-            IllegalRecord();    /* oops seen twice */
+            fatal_RecFormat();    /* oops seen twice */
         if (segId != SSTACK)        /* by default copy the length */
             segSizes[segId] = ((segdef_t *)inP)->len;
         else if (! seen.stackSize)  /* for stack copy if ! user overridden */
@@ -315,7 +325,7 @@ void ProcModhdr()
         if (segSizes[segId] > 0)    /* check we have some data */
             loadHasSize = true;
         if (((segdef_t *)inP)->combine - 1 > ABYTE - 1) /* check valid alignment */
-            IllegalRecord();
+            fatal_RecFormat();
         segFlags[segId] = segFlags[segId] + ((segdef_t *)inP)->combine; /* set the combine info */
         inP += sizeof(segdef_t);    /* skip to next seg info */
     }
@@ -336,7 +346,7 @@ void ProcModhdr()
             if (atTopOfMem != 0)    /* check for going over 64k */
             {
                 if (segSize > 0)    /* program exceeds 64k */
-                    ErrChkReport(ERR240, &inFileName[1], true);
+                    fatal_FileIO(ERR240, &inFileName[1], true);
                 segFlags[segId] |= FWRAP0;
             }
         }
@@ -358,7 +368,7 @@ void ProcModhdr()
             if (loadAddress == 0)       /* at 64k ok else Error() */
                 atTopOfMem = FWRAP0;
             else
-                ErrChkReport(ERR240, &inFileName[1], true);  /* exceeds 64k */
+                fatal_FileIO(ERR240, &inFileName[1], true);  /* exceeds 64k */
     }
     segBases[SSTACK] = segBases[SSTACK] + segSizes[SSTACK]; /* stack goes down so update to top */
     GetRecord();    /* preload next record */
@@ -369,10 +379,10 @@ void ProcComdef()
 {
     while (inP < erecP) {
         if ((segId = ((comnam_t *)inP)->segId) < SNAMED || segId == SBLANK)
-            IllegalRecord();
+            fatal_RecFormat();
         /* check if (combine value not appropriate for common or if this one alReady seen */
         if ((segFlags[segId] & AMASK) == AUNKNOWN || (segFlags[segId] & FSEGSEEN) != 0)
-            IllegalRecord();
+            fatal_RecFormat();
         segFlags[segId] |= FSEGSEEN;    /* flag as seen */
         inP = inP + 2 + ((comnam_t *)inP)->name[0];     /* past byte, len, string */
     }
@@ -391,7 +401,7 @@ void ProcHdrAndComDef()
     }
     for (segId = SNAMED; segId <= SBLANK - 1; segId++) {    /* check commons in modhdr have comdef entries */
         if (((segFlags[segId] & AMASK) != AUNKNOWN) && ((segFlags[segId] & FSEGSEEN) == 0))
-            BadRecordSeq();
+            fatal_RecSeq();
     }
 } /* ProcHdrAndComDef */
 

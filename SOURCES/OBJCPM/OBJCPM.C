@@ -29,7 +29,7 @@
 #include "objcpm.h"
 
 /*
-  вЁЇл § ЇЁбҐ© ў ®ЎкҐЄв­®¬ д ©«Ґ
+  типы записей в объектном файле
 */
 #define R_MODHDR 2
 #define R_MODEND 4
@@ -55,26 +55,29 @@
 #define OUT_SCR 1
 
 
+
+
 /*
-  д« ЈЁ ўлў®¤  ­  гбва®©бвў 
+  флаги вывода на устройства
 */
 char isMakeCOM;
 char isMakeLIN;
 char isMakeSYM;
-char isBinary;
+char isInsertJMP;       // флаг разрешения на вставку JMP to entry point
+                        // если объектник лоцирован на адрес 0x103
 char isOutPrinter;
 
 /*
-  Ё¬Ґ­  д ©«®ў
+  имена файлов
 */
 char szFileObj[_MAX_PATH];
 char szFileSym[_MAX_PATH];
 char szFileLin[_MAX_PATH];
 char szFileCom[_MAX_PATH];
-char szFileName[_MAX_PATH];     // Ё¬п ўе®¤пйҐЈ® д ©«  ЎҐ§ а биЁаҐ­Ёп
+char szFileName[_MAX_PATH];     // имя входящего файла без расширения
 
 /*
-  ¤ ­­лҐ ўе®¤пйҐЈ® д ©« 
+  данные входящего файла
 */
 FILE *hObj;
 unsigned int maxPosBufObj;
@@ -82,7 +85,7 @@ unsigned int posBufObj;
 char BufferObj[2048] ;
 
 /*
-  ¤ ­­лҐ ¤«п SYM-д ©« 
+  данные для SYM-файла
 */
 FILE *hSym;
 int maxPosBufSym;
@@ -90,7 +93,7 @@ int posBufSym;
 char BufferSym[2048] ;
 
 /*
-  ¤ ­­лҐ ¤«п LIN-д ©« 
+  данные для LIN-файла
 */
 FILE *hLin;
 int maxPosBufLin;
@@ -98,41 +101,42 @@ int posBufLin;
 char BufferLin[2048] ;
 
 /*
-  ¤ ­­лҐ ¤«п COM-д ©« 
+  данные для COM-файла
 */
 FILE *hCom;
 int maxPosBufCom;
 int posBufCom;
 char BufferCom[2048] ;
 
-unsigned int EmptyAddress;      // бў®Ў®¤­л©  ¤аҐб §  Є®­ж®¬ Є®­Ґз­®Ј® д ©«  (Їа®Ја ¬¬л)
-unsigned int BaseAddress;       //  ¤аҐб § Јаг§ЄЁ Є®­Ґз­®Ј® д ©«  (Їа®Ја ¬¬л)
-unsigned int StartingAddress;   //  ¤аҐб в®зЄЁ ўе®¤  ў Їа®Ја ¬¬г
+unsigned int EmptyAddress;      // свободный адрес за концом конечного файла (программы)
+unsigned int BaseAddress;       // адрес загрузки конечного файла (программы)
+unsigned int StartingAddress;   // адрес точки входа в программу
 
 /*
-  Ї абҐа
+  парсер
 */
-char prnLineCount;  // Є®«ЁзҐбвў® ўлўҐ¤Ґ­­ле бЁ¬ў®«®ў ў вҐЄгйҐ© «Ё­ЁЁ ЇаЁ­вҐа 
-char outDevType;    // гбва®©бвў® ўлў®¤ : 0 - SYM, 1 - screen, 2 - LIN
-char tabCount;      // Є®«ЁзҐбвў® в Ўг«пжЁ© ¤«п ўлў®¤  (®­Ё ЄниЁаговбп
-                    // Ё ўлў®¤пвбп ЇаЁ б«гз Ґ бЄ®Ї®¬)
+char prnLineCount;  // количество выведенных символов в текущей линии принтера
+char outDevType;    // устройство вывода: 0 - SYM, 1 - screen, 2 - LIN
+char tabCount;      // количество табуляций для вывода (они кэшируются
+                    // и выводятся при случае скопом)
 
 
-char tabCount;      // Є®«ЁзҐбвў® в Ўг«пжЁ© ¤«п ўлў®¤  (ЄҐиЁаговбп Ё ўлў®¤пвбп бЄ®Ї®¬)
-char symTabCount;   // в® ¦Ґ ¤«п SYM?
-char linTabCount;   // в® ¦Ґ ¤«п LIN?
-char recsInSYMline; // ¤«п ўла ў­Ёў п бва®Є ў SYM д ©«Ґ
-char recsInLINline; // Є®«ЁзҐбвў® § ЇЁбҐ© ў вҐЄгйҐ© бва®ЄҐ д ©«  LIN
-char prnLineCount;  // Є®«ЁзҐбвў® бЁ¬ў®«®ў ў а бЇҐз в ­­®© бва®ЄҐ
+char tabCount;      // количество табуляций для вывода (кешируются и выводятся скопом)
+char symTabCount;   // то же для SYM?
+char linTabCount;   // то же для LIN?
+char recsInSYMline; // для выравнивая строк в SYM файле
+char recsInLINline; // количество записей в текущей строке файла LIN
+char prnLineCount;  // количество символов в распечатанной строке
 
 unsigned int word_BD1;
-char byte_BD3;
-
-
+char isMODDAT;      // флаг наличия секции с данными и кодом
 
 
 void closeFiles();
 
+
+char signonMsg[] = "ISIS-II OBJECT CONVERTER TO CP/M EXECUTABLE";
+char szVersion[] = "v1.2";
 
 struct {
     char *dev;
@@ -255,7 +259,6 @@ static int MapFile(osfile_t *osfileP, const char *isisPath)
 
 void doHelp()
 {
-    printf("Convert ISIS-II OBJ file to CP/M COM file.  ver. 1.1\n");
     printf("Usage: OBJCPM in_file [${[+-][key],...}]\n");
     printf("    params:\n");
     printf("        $    - signature of block parameters.\n");
@@ -264,15 +267,15 @@ void doHelp()
     printf("        C    - produce COM.\n");
     printf("        P    - out on printer, else on file SYM.\n");
     printf("        L    - make LIN file.\n");
-    printf("        B    - \n");
+    printf("        B    - insert JMP to entry point if start address = 103h\n");
 }
 
 /*
-  ЇаҐалў ­ЁҐ Їа®Ја ¬¬л Ї® ЄаЁвЁзҐбЄ®© ®иЁЎЄҐ
+  прерывание программы по критической ошибке
 */
-void doExit(char *str)
+void fatal_Error(char *str)
 {
-    printf("Error: %s\n", str);
+    printf("ERROR: %s\n\n", str);
     closeFiles();
     exit(1);
 }
@@ -281,15 +284,15 @@ void doExit(char *str)
 
 /*****************************************************************************
 
-  Ї а ¬Ґвал Є®¬ ­¤­®© бва®ЄЁ
+  параметры командной строки
 
  *****************************************************************************/
 
 char cmdLine[128];
-char isSecondParam;     // ўв®а®© Ї а ¬Ґва: 0  - Ё¬п Є Є®Ј®-в® ¬®¤г«п
-                        //                  FF - ­ зЁ­ Ґвбп б '$' Ё«Ё ®вбгвбвўгҐв
-char szSecondParam[8];  // б®ЎбвўҐ­­® ўв®а®© Ї а ¬Ґва
-                        // (бЁ¬ў®« '$' ¬Ґ­пҐвбп ­  Їа®ЎҐ«)
+char isSecondParam;     // второй параметр: 0  - имя какого-то модуля
+                        //                  FF - начинается с '$' или отсутствует
+char szSecondParam[8];  // собственно второй параметр
+                        // (символ '$' меняется на пробел)
 
 
 
@@ -323,14 +326,14 @@ void parseParam(int argc, char *argv[])
     osfile_t osfile;
 
     if (strlen(argv[1]) > 16)
-        doExit("bad object file name!");
+        fatal_Error("bad object file name!");
 
-    // Ї®«гз Ґ¬ ўе®¤пйЁ© д ©«
+    // получаем входящий файл
     printf("INPUT: %s\n", argv[1]);
 
     if (MapFile(&osfile, argv[1]) != ERROR_SUCCESS)
     {
-        doExit("bad file name!");
+        fatal_Error("bad file name!");
     }
     strcpy(szFileObj, osfile.name);
     strcpy(szFileName, osfile.name);
@@ -338,7 +341,7 @@ void parseParam(int argc, char *argv[])
     ptr = strrchr(szFileName, '.');
     if (ptr)
         *ptr = '\0';
-    // бў®¤Ё¬ ўбҐ Ї а ¬Ґвал ў ®¤­г бва®Єг
+    // сводим все параметры в одну строку
     len = 0;
     for (i=2; i < argc && (len+strlen(argv[i])+1) < sizeof(cmdLine)-2; i++)
     {
@@ -349,11 +352,11 @@ void parseParam(int argc, char *argv[])
     if (i < argc)
         printf("WARNING! Command line truncated\n");
 
-    // вҐЇҐам а §ЎЁа Ґ¬ Ї а ¬Ґвал
+    // теперь разбираем параметры
     isMakeCOM = -1;
     isMakeLIN = -1;
     isMakeSYM = -1;
-    isBinary = -1;
+    isInsertJMP = -1;
     isOutPrinter = 0;
 
     ptr = &cmdLine;
@@ -379,7 +382,7 @@ void parseParam(int argc, char *argv[])
                           break;
                 case 'L': isMakeLIN = flag;
                           break;
-                case 'B': isBinary = flag;
+                case 'B': isInsertJMP = flag;
                           break;
             }
         }
@@ -410,10 +413,10 @@ int obj_Open()
 
 
 /*
-  зЁв Ґв Ў ©в б Ї®в®Є  ўе®¤­®Ј® д ©« 
-  ­  ўле®¤Ґ:
-      0 - § Є®­зЁ«Ё звҐ­ЁҐ
-     -1 - бзЁв «Ё ®зҐаҐ¤­®© Ў ©в
+  читает байт с потока входного файла
+  на выходе:
+      0 - закончили чтение
+     -1 - считали очередной байт
 */
 char obj_GetCh(char *res)
 {
@@ -421,7 +424,7 @@ char obj_GetCh(char *res)
 
     if (posBufObj >= maxPosBufObj)
     {
-        // ЎгдҐа Їгбв, Ї®а  Ї®¤Јаг¦ вм Ё§ д ©« 
+        // буфер пуст, пора подгружать из файла
         posBufObj = 0;
         while (posBufObj < maxPosBufObj)
         {
@@ -445,13 +448,13 @@ char obj_GetCh(char *res)
 }
 
 /*
-  звҐ­ЁҐ Ў ©в  б Ёбе®¤­ЁЄ 
-  res - бзЁв ­­л© Ў ©в
-  c - ў®§¬®¦­® CRC
-  d - ¤ҐЄаҐ¬Ґ­вЁагойЁ© бзҐвзЁЄ
-  ­  ўле®¤Ґ:
-      0 - § Є®­зЁ«Ё звҐ­ЁҐ
-     -1 - гбЇҐи­®Ґ звҐ­ЁҐ
+  чтение байта с исходника
+  res - считанный байт
+  c - возможно CRC
+  d - декрементирующий счетчик
+  на выходе:
+      0 - закончили чтение
+     -1 - успешное чтение
 */
 
 char obj_GetByte(char *res, char *c, unsigned int *d)
@@ -459,7 +462,7 @@ char obj_GetByte(char *res, char *c, unsigned int *d)
     char ch;
 
     if (!obj_GetCh(&ch))
-        doExit("unexpected end of file!");
+        fatal_Error("unexpected end of file!");
     *c += ch;
     *d = *d - 1;
     *res = ch;
@@ -472,13 +475,13 @@ unsigned int obj_GetWord(char *c, unsigned int *d)
     unsigned int res;
 
     if (!obj_GetByte(&lo, c, d))
-        doExit("unexpected end of file!");
+        fatal_Error("unexpected end of file!");
     if (*d == 0)
-        doExit("record too long!");
+        fatal_Error("record too long!");
     if (!obj_GetByte(&hi, c, d))
-        doExit("unexpected end of file!");
+        fatal_Error("unexpected end of file!");
     if (*d == 0)
-        doExit("record too long!");
+        fatal_Error("record too long!");
     res = (((unsigned int) hi << 8) + lo) & 0xFFFF;
     return res;
 }
@@ -518,7 +521,7 @@ int sym_PutByte(char ch)
 
     if (posBufSym >= maxPosBufSym)
     {
-        // ЎгдҐа Ї®«®­, Ї®а  бЄЁ¤лў вм ­  ¤ЁбЄ
+        // буфер полон, пора скидывать на диск
         posBufSym = 0;
         while (posBufSym < maxPosBufSym)
         {
@@ -530,7 +533,7 @@ int sym_PutByte(char ch)
             }
             posBufSym += 128;
         }
-        // § ўҐаи Ґ¬ бЎа®б ­  ¤ЁбЄ
+        // завершаем сброс на диск
         posBufSym = 0;
     }
     BufferSym[posBufSym] = ch;
@@ -568,7 +571,7 @@ int lin_PutByte(char ch)
 {
     if (posBufLin >= maxPosBufLin)
     {
-        // ЎгдҐа Ї®«®­, Ї®а  бЄЁ¤лў вм ­  ¤ЁбЄ
+        // буфер полон, пора скидывать на диск
         posBufLin = 0;
         while (posBufLin < maxPosBufLin)
         {
@@ -579,7 +582,7 @@ int lin_PutByte(char ch)
             }
             posBufLin += 128;
         }
-        // § ўҐаи Ґ¬ бЎа®б ­  ¤ЁбЄ
+        // завершаем сброс на диск
         posBufLin = 0;
     }
     BufferLin[posBufLin] = ch;
@@ -616,7 +619,7 @@ int com_PutByte(char ch)
 {
     if (posBufCom >= maxPosBufCom)
     {
-        // ЎгдҐа Ї®«®­, Ї®а  бЄЁ¤лў вм ­  ¤ЁбЄ
+        // буфер полон, пора скидывать на диск
         posBufCom = 0;
         while (posBufCom < maxPosBufCom)
         {
@@ -627,7 +630,7 @@ int com_PutByte(char ch)
             }
             posBufCom += 128;
         }
-        // § ўҐаи Ґ¬ бЎа®б ­  ¤ЁбЄ
+        // завершаем сброс на диск
         posBufCom = 0;
     }
     BufferCom[posBufCom] = ch;
@@ -638,7 +641,7 @@ int com_PutByte(char ch)
 
 /*****************************************************************************
 
- Џ абҐа
+ Парсер
 
  *****************************************************************************/
 
@@ -660,7 +663,7 @@ void put_Byte(char ch)
             prnLineCount++;
         }
     }
-    // вҐЇҐам ўлў®¤Ё¬ ў д ©« Ё«Ё ­  нЄа ­
+    // теперь выводим в файл или на экран
     switch (outDevType)
     {
         case OUT_SYM:
@@ -678,7 +681,7 @@ void put_Byte(char ch)
 }
 
 /*
-  ўлў®¤ Ў ©в  ў д ©« Ё«Ё нЄа ­, б ЄниЁа®ў ­ЁҐ¬ в Ўг«пжЁ©
+  вывод байта в файл или экран, с кэшированием табуляций
 */
 void out_Byte(char ch)
 {
@@ -730,7 +733,7 @@ void out_String(char *s)
 }
 
 /*
-  ўлў®¤ Ў ©в  ў бЁ¬ў®«м­®¬ иҐбв­ ¤ж вҐаЁз­®¬ ўЁ¤Ґ ­  вҐЄгйҐҐ гбва®©бвў®
+  вывод байта в символьном шестнадцатеричном виде на текущее устройство
 */
 void out_HexByte(char ch)
 {
@@ -743,7 +746,7 @@ void out_HexByte(char ch)
 
 
 /*
-  ўлў®¤ б«®ў  ў бЁ¬ў®«м­®¬ иҐбв­ ¤ж вҐаЁз­®¬ ўЁ¤Ґ ­  вҐЄгйҐҐ гбва®©бвў®
+  вывод слова в символьном шестнадцатеричном виде на текущее устройство
 */
 void out_HexWord(unsigned int w)
 {
@@ -771,39 +774,6 @@ void out_Decimal(unsigned int num)
 }
 
 
-/*
-int Parse()
-{
-    char ch;
-    char crc;
-    unsigned int len, tmp;
-    char res;
-
-    do {
-        crc = 0;
-        len = 0xffff;
-        if ( (res = obj_GetByte(&ch, &crc, &len)) == 0 )
-        {
-            printf("found EOF1\n");
-            return 0;
-        }
-        tmp = obj_GetWord(&crc, &len);
-        len = tmp;
-        //printf("type: 0x%02X\n", ch);
-        //printf("size: %u\n", len & 0xFFFF);
-        while (len)
-        {
-            if ( (res = obj_GetByte(&ch, &crc, &len)) == 0 )
-            {
-                printf("found EOF\n");
-                return 0;
-            }
-        }
-    } while (res);
-    return -1;
-}
-*/
-
 int load_MODHDR(char * crc, unsigned int *len)
 {
     char ch;
@@ -812,7 +782,7 @@ int load_MODHDR(char * crc, unsigned int *len)
     char lenName;
 
     obj_GetByte(&lenName, crc, len);
-    // бзЁвлў Ґ¬ Ё¬п
+    // считываем имя
     if (lenName >= 16)
         lenName = 16;
     for (tmp = 0; tmp < lenName; tmp++)
@@ -820,7 +790,7 @@ int load_MODHDR(char * crc, unsigned int *len)
         obj_GetByte(&ch, crc, len);
         szName[tmp] = ch;
     }
-    // § Ј®«®ў®Є ў SYM
+    // заголовок в SYM
     outDevType = OUT_SYM;
     if (recsInSYMline)
         out_CrLf();
@@ -833,7 +803,7 @@ int load_MODHDR(char * crc, unsigned int *len)
     }
     out_CrLf();
 
-    // § Ј®«®ў®Є ў LIN
+    // заголовок в LIN
     outDevType = OUT_LIN;
     if (recsInLINline)
         out_CrLf();
@@ -861,7 +831,11 @@ int load_MODHDR(char * crc, unsigned int *len)
 }
 
 
-
+/*
+  на выходе:
+      0 - во входном файле не обнаружено ни данных, ни кода
+      1 - всё хорошо.
+*/
 int Parse()
 {
     char ch;
@@ -876,15 +850,15 @@ int Parse()
     do {
         crc = 0;
         len = 0xffff;
-        // зЁв Ґ¬ вЁЇ § ЇЁбЁ
+        // читаем тип записи
         obj_GetByte(&ch, &crc, &len);
-        // зЁв Ґ¬ ¤«Ё­г § ЇЁбЁ
+        // читаем длину записи
         if ((tmp = obj_GetWord(&crc, &len)) == 0)
-            doExit("bad record!");
+            fatal_Error("bad record!");
         len = tmp;
 
-        // ch - бЁ¬ў®«
-        // len - ¤«Ё­  § ЇЁбЁ
+        // ch - символ
+        // len - длина записи
         switch (ch)
         {
             case R_MODHDR:
@@ -920,7 +894,7 @@ int Parse()
 
 
 
-            case R_LOCDEF:             /* ўлў®¤Ё¬ Ё¬п ¬ҐвЄЁ Ё Ґс  ¤аҐб ў SYM */
+            case R_LOCDEF:             /* выводим имя метки и её адрес в SYM */
                 if (isSecondParam != 0)
                 {
                     outDevType = OUT_SYM;
@@ -945,11 +919,11 @@ int Parse()
                             out_CrLf();
                             recsInSYMline = 0;
                         }
-                        // ўлў®¤Ё¬  ¤аҐб ¬ҐвЄЁ
+                        // выводим адрес метки
                         out_HexWord(tmp);
                         out_Space();
                         recsInSYMline = recsInSYMline + res + 5;
-                        // ўлў®¤Ё¬ Ё¬п ¬ҐвЄЁ
+                        // выводим имя метки
                         while (res)
                         {
                             obj_GetByte(&ch, &crc, &len);
@@ -968,21 +942,29 @@ int Parse()
                 {
                     obj_GetByte(&ch, &crc, &len);
                     if (ch)
-                        doExit("bad record!");
+                        fatal_Error("bad record!");
                     tmp = obj_GetWord(&crc, &len);
                     adr = tmp;
                     if (tmp+len >= EmptyAddress)
                         EmptyAddress = tmp+len;
-                    if (byte_BD3 == 0)
+                    if (isMODDAT == 0)
                     {
-                        byte_BD3 = -1;
-                        if (isBinary)
+                        isMODDAT = -1;
+                        if (isInsertJMP)
                         {
                             BaseAddress = tmp;
                             word_BD1 = tmp;
                             if ((tmp & 0xFF) == 3)
                             {
-                                printf("Insert jump to entry point\n");
+                                /*
+                                  При локации программы зарезервировано
+                                  место под джамп на Entry Point.
+                                  т.е. программа была размещена
+                                  по адресу 0x103 (0x203 и тд.)
+                                  Поэтому вставляем JMP 0x0000,
+                                  а адрес перехода подкорректируем в конце,
+                                  когда станет известна точка входа.
+                                */
                                 com_PutByte(0xC3);
                                 com_PutByte(0);
                                 com_PutByte(0);
@@ -991,12 +973,12 @@ int Parse()
                     }
                     if (tmp >= BaseAddress)
                     {
-                        // ¬Ґ­пҐ¬ ¬Ґбв ¬Ё BaseAddress Ё вҐЄгйЁ©  ¤аҐб
+                        // меняем местами BaseAddress и текущий адрес
                         tmp = BaseAddress;
                         BaseAddress = adr;
                     }
                     if (tmp < word_BD1)
-                        doExit("bad record!");
+                        fatal_Error("bad record!");
                     while (tmp != word_BD1)
                     {
                         com_PutByte(0);
@@ -1022,17 +1004,17 @@ int Parse()
                     obj_GetByte(&ch, &crc, &len);
                     StartingAddress = obj_GetWord(&crc, &len);
                     if (StartingAddress == 0)
-                        doExit("bad module!");
+                        fatal_Error("bad module!");
                 }
                 break;
 
             case R_MODEOF:
                 if (isMakeCOM)
                 {
-                    if (byte_BD3 == 0)
+                    if (isMODDAT == 0)
                         return 0;
                     else
-                        return -1;
+                        return 1;
                 }
                 break;
 
@@ -1042,13 +1024,13 @@ int Parse()
             default:
                 break;
         }
-        // Їа®ЇгбЄ Ґ¬ ®бв в®Є ¤ ­­ле Ё«Ё ­ҐЁ§ўҐбв­лҐ вЁЇл § ЇЁбҐ©
+        // пропускаем остаток данных или неизвестные типы записей
         while (len)
         {
             obj_GetByte(&ch, &crc, &len);
         }
     } while (crc == 0);
-    doExit("bad record CRC!");
+    fatal_Error("bad record CRC!");
     return 0;
 }
 
@@ -1065,11 +1047,11 @@ void closeFiles()
         if (hSym)
         {
 
-            // § Єалў Ґ¬ SYM д ©«
+            // закрываем SYM файл
             do {
                 res = posBufSym & 0x7F;
                 if (res == 0)
-                    maxPosBufSym = posBufSym; // ¤®бвЁЈ«Ё ўла ў­Ёў ­Ёп Ї® 128 Ў ©в, ўле®¤Ё¬
+                    maxPosBufSym = posBufSym; // достигли выравнивания по 128 байт, выходим
                 sym_PutByte(0x1A);
             } while (res);
             fclose(hSym);
@@ -1080,11 +1062,11 @@ void closeFiles()
     {
         if (hLin)
         {
-            // § Єалў Ґ¬ LIN д ©«
+            // закрываем LIN файл
             do {
                 res = posBufLin & 0x7F;
                 if (res == 0)
-                    maxPosBufLin = posBufLin; // ¤®бвЁЈ«Ё ўла ў­Ёў ­Ёп Ї® 128 Ў ©в, ўле®¤Ё¬
+                    maxPosBufLin = posBufLin; // достигли выравнивания по 128 байт, выходим
                 lin_PutByte(0x1A);
             } while (res);
             fclose(hLin);
@@ -1095,11 +1077,11 @@ void closeFiles()
     {
         if (hCom)
         {
-            // § Єалў Ґ¬ COM д ©«
+            // закрываем COM файл
             do {
                 res = posBufCom & 0x7F;
                 if (res == 0)
-                    maxPosBufCom = posBufCom; // ¤®бвЁЈ«Ё ўла ў­Ёў ­Ёп Ї® 128 Ў ©в, ўле®¤Ё¬
+                    maxPosBufCom = posBufCom; // достигли выравнивания по 128 байт, выходим
                 com_PutByte(0x1A);
             } while (res);
             fclose(hCom);
@@ -1114,7 +1096,7 @@ void closeFiles()
 
 int Start()
 {
-    int res, ret;
+    int ret;
 
     if (!obj_Open())
         return 1;
@@ -1130,7 +1112,7 @@ int Start()
     symTabCount = 0;
     linTabCount = 0;
     recsInLINline = 0;
-    byte_BD3 = 0;
+    isMODDAT = 0;
 
     ret = Parse();
     fclose(hObj);
@@ -1140,35 +1122,40 @@ int Start()
     outDevType = OUT_LIN;
     out_CrLf();
     outDevType = OUT_SCR;
-    if (res == 0)
+    if (ret == 0)
         out_String("ERROR: Bad load module.\n");
 
-    // § Єалў Ґ¬ д ©«л
+    // закрываем файлы
     closeFiles();
-    // Є®ааҐЄвЁагҐ¬ ЇҐаҐе®¤ ­  в®зЄг ўе®¤  ў Їа®Ја ¬¬г
+    // корректируем переход на точку входа в программу
     if (isMakeCOM)
     {
         if ((BaseAddress & 0xFF) == 3)
         {
-            printf("Correct jump to entry point\n");
+            printf("INSERT JUMP TO ENTRY POINT AT: ");
             hCom = fopen(szFileCom, "r+b");
             fseek(hCom, 0, SEEK_SET);
-            res = fread(&BufferCom, 1, 3, hCom);
-            if (res == 3)
+            if (fread(&BufferCom, 1, 3, hCom) == 3)
             {
                 fseek(hCom, 0, SEEK_SET);
                 BufferCom[1] = StartingAddress & 0xFF;
                 BufferCom[2] = StartingAddress >> 8;
+                printf("0x%04X\n", StartingAddress & 0xFFFF);
                 if (fwrite(&BufferCom, 1, 3, hCom) != 3)
                 {
                     printf("ERROR: write to disk.\n");
+                    ret = 0;
                 }
+            } else {
+                printf("\nERROR: can't read from file '%s'\n", szFileCom);
+                ret = 0;
             }
             fclose(hCom);
         }
     }
 
-    // ўлў®¤Ё¬ Ё­д®а¬ жЁо
+    // выводим информацию
+    outDevType = OUT_SCR;
     out_CrLf();
     out_HexWord(BaseAddress);
     out_String(" = BASE ADDRESS");
@@ -1180,7 +1167,10 @@ int Start()
     out_String(" = NEXT EMPTY ADDRESS");
     out_CrLf();
 
-    return ret;
+    if (ret)
+        return 0;               // возвращаем статус успешного завершения
+
+    return 1;
 }
 
 
@@ -1188,6 +1178,9 @@ int Start()
 
 int main(int argc, char *argv[])
 {
+    int res;
+
+    printf("%s %s\n", signonMsg, szVersion);
     if (argc < 2)
     {
         doHelp();
@@ -1196,5 +1189,8 @@ int main(int argc, char *argv[])
     getSecondParam(argc, argv);
     parseParam(argc, argv);
 
-    return Start();
+    res = Start();
+    outDevType = OUT_SCR;
+    out_CrLf();
+    return res;
 }

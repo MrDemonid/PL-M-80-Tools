@@ -25,7 +25,7 @@
 
 
 #include "link.h"
-void FileError(word errCode, pointer file, bool errExit)
+void fatal_FileIO(word errCode, pointer file, bool errExit)
 {
         word status;
 
@@ -39,5 +39,5 @@ void FileError(word errCode, pointer file, bool errExit)
                 if (errExit )
                         Exit();
         }
-} /* FileError() */
+} /* fatal_FileIO() */
 

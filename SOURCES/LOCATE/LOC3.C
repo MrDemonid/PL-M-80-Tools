@@ -32,7 +32,7 @@
 void FixupBoundsChk(word addr)
 {
     if (addr < inFragment.saddr || inFragment.eaddr < addr)
-        FatalErr(ERR213);   /* Fixup Bounds Error */
+        fatal_Error(ERR213);   /* Fixup Bounds Error */
 } /* FixupBoundsChk */
 
 
@@ -190,35 +190,35 @@ void LocateFile()
     /* process the link file */
     while (inRecordP->rectyp != R_MODEND) {
         switch (inRecordP->rectyp >> 1) {
-                case 0: IllegalReloc(); break; /* 0 */
-                case 1: BadRecordSeq(); break; /* 2 - modhdr alReady processed */
+                case 0: fatal_RelocRec(); break; /* 0 */
+                case 1: fatal_RecSeq(); break; /* 2 - modhdr alReady processed */
                 case 2: break;                 /* 4 - modend Exited() while alReady */
                 case 3: ProcModdat(); break;       /* 6 - moddat */
                 case 4: ProcLinNum(); break;       /* 8 - linnum */
-                case 5: IllegalReloc(); break; /* 0A */
-                case 6: IllegalReloc(); break; /* 0C */
-                case 7: ErrChkReport(ERR204, &inFileName[1], true); break; /* 0E - modeof Premature() EOF */
+                case 5: fatal_RelocRec(); break; /* 0A */
+                case 6: fatal_RelocRec(); break; /* 0C */
+                case 7: fatal_FileIO(ERR204, &inFileName[1], true); break; /* 0E - modeof Premature() EOF */
                 case 8: ProcAncest(); break;       /* 10 - ancest */
                 case 9: ProcDefs(seen.symbols, aSym); break;   /* 12 - locdef */
-                case 10: IllegalReloc(); break; /* 14 */
+                case 10: fatal_RelocRec(); break; /* 14 */
                 case 11: ProcDefs(seen.publics, aPub); break;   /* 16 - pubdef */
                 case 12: ProcExtnam(); break;       /* 18 - extnam - externals */
-                case 13: IllegalReloc(); break; /* 1A */
-                case 14: IllegalReloc(); break; /* 1C */
-                case 15: IllegalReloc(); break; /* 1E */
-                case 16: BadRecordSeq(); break; /* 20 - fixext link should have processed these */
-                case 17: BadRecordSeq(); break; /* 22 - fixloc link should have processed these */
-                case 18: BadRecordSeq(); break; /* 24 - fixseg link should have processed these */
-                case 19: BadRecordSeq(); break; /* 26 - libloc attempting to locate a library */
-                case 20: BadRecordSeq(); break; /* 28 - libnam attempting to locate a library */
-                case 21: BadRecordSeq(); break; /* 2A - libdic attempting to locate a library */
-                case 22: BadRecordSeq(); break; /* 2C - libhdr attempting to locate a library */
-                case 24: BadRecordSeq(); break; /* 2E - processed comdef alReady */
+                case 13: fatal_RelocRec(); break; /* 1A */
+                case 14: fatal_RelocRec(); break; /* 1C */
+                case 15: fatal_RelocRec(); break; /* 1E */
+                case 16: fatal_RecSeq(); break; /* 20 - fixext link should have processed these */
+                case 17: fatal_RecSeq(); break; /* 22 - fixloc link should have processed these */
+                case 18: fatal_RecSeq(); break; /* 24 - fixseg link should have processed these */
+                case 19: fatal_RecSeq(); break; /* 26 - libloc attempting to locate a library */
+                case 20: fatal_RecSeq(); break; /* 28 - libnam attempting to locate a library */
+                case 21: fatal_RecSeq(); break; /* 2A - libdic attempting to locate a library */
+                case 22: fatal_RecSeq(); break; /* 2C - libhdr attempting to locate a library */
+                case 24: fatal_RecSeq(); break; /* 2E - processed comdef alReady */
         }
     }
     ProcModend();       /* Read() the modend and generate the rest of the located file */
     Close(outputfd, &statusIO);
-    ErrChkReport(statusIO, &outFileName[1], true);
+    fatal_FileIO(statusIO, &outFileName[1], true);
     if (havePagingFile)        /* get rid of any paging file */
     {
         Close(tmpfd, &statusIO);
@@ -227,6 +227,6 @@ void LocateFile()
     ForceSOL();     /* make sure at start of line if (symbols listed */
     PrintMemoryMap();   /* print the final memory map + any overlay Errors() */
     Close(readfd, &statusIO);
-    ErrChkReport(statusIO, &inFileName[1], true);
+    fatal_FileIO(statusIO, &inFileName[1], true);
 } /* LocateFile */
 

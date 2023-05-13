@@ -49,7 +49,7 @@ pointer GetCommonName(byte segid)
     while (1) {
         GetRecord();    /* scan comdef records */
         if (inRecordP->rectyp != R_COMDEF )
-            BadRecordSeq();
+            fatal_RecSeq();
         while (inP < erecP) {   /* look for the seg */
             if (segid == ((comnam_t *)inP)->segId )
                 return ((comnam_t *)inP)->name; /* return pointer to name */

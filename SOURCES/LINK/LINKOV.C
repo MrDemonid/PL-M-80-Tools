@@ -59,7 +59,7 @@ void SeekExtMap()
 
     blk = externsBase / 128 * sizeof(*extMapP);  /* changed as pointers may be > 2 bytes */
     Seek(tmpfilefd, 2, &blk, &zero, &statusIO);
-    FileError(statusIO, &linkTmpFile[1], true);
+    fatal_FileIO(statusIO, &linkTmpFile[1], true);
 } /* SeekExtMap() */
 
 void PageOutExtMap()
@@ -68,16 +68,16 @@ void PageOutExtMap()
         externsEnd = externsEnd + 128;
     SeekExtMap();
     Write(tmpfilefd, (pointer)extMapP, 128 * sizeof(*extMapP), &statusIO);
-    FileError(statusIO, &linkTmpFile[1], true);
+    fatal_FileIO(statusIO, &linkTmpFile[1], true);
 } /* PageOutExtMap() */
 
 void PageInExtMap()
 {
     SeekExtMap();
     Read(tmpfilefd, (pointer)extMapP, 128 * sizeof(*extMapP), &actRead, &statusIO);
-    FileError(statusIO, &linkTmpFile[1], true);
+    fatal_FileIO(statusIO, &linkTmpFile[1], true);
     if (actRead != 256)
-        FileError(ERR204, &linkTmpFile[1], true);
+        fatal_FileIO(ERR204, &linkTmpFile[1], true);
 } /* PageInExtMap() */
 
 void AddExtMap(symbol_t *symP)
@@ -88,7 +88,7 @@ void AddExtMap(symbol_t *symP)
         {
             Delete(&linkTmpFile[1], &statusIO);
             Open(&tmpfilefd, &linkTmpFile[1], 3, 0, &statusIO);
-            FileError(statusIO, &linkTmpFile[1], true);
+            fatal_FileIO(statusIO, &linkTmpFile[1], true);
             haveTmpFile = true;
         }
         PageOutExtMap();
@@ -103,7 +103,7 @@ symbol_t *GetSymbolP(word symId)
 {
 
     if (symId >= externsCount) /* out of range */
-        IllFmt();
+        fatal_RecFormat();
     if ((symId & 0xFF80) != externsBase)  /* ! in memory */
     {
         PageOutExtMap();            /* Write() out current */
@@ -128,7 +128,7 @@ void InitExternsMap()
 void FlushTo()
 {
     Write(tofilefd, soutP, (word)(outP - soutP), &statusIO);
-    FileError(statusIO, &toFileName[1], true);
+    fatal_FileIO(statusIO, &toFileName[1], true);
     outP = soutP;
 } /* FlushTo() */
 
@@ -147,7 +147,7 @@ void EndRecord()
     pointer pch;
 
     if ((outRecordP->reclen = (word)(outP - &outRecordP->rectyp - 2)) > 1025)
-        FileError(ERR211, &toFileName[1], true);    /* Record() to long */
+        fatal_FileIO(ERR211, &toFileName[1], true);    /* Record() to long */
     crc = 0;
     for (pch = &outRecordP->rectyp; pch <= outP - 1; pch++) {   /* calculate and insert crc */
         crc = crc + *pch;
@@ -172,7 +172,7 @@ bool ExtendRec(word cnt)
 void static  EmitMODHDRComSegInfo(byte segId, word len, byte combine)
 {
         if (ExtendRec(sizeof(segdef_t))) /* make sure enough room */
-            FileError(ERR226, &toFileName[1], true);    /* mod hdr too long */
+            fatal_FileIO(ERR226, &toFileName[1], true);    /* mod hdr too long */
         ((segdef_t *)outP)->segId = segId;     /* emit segid, name, combine and Size() */
         ((segdef_t *)outP)->len = len;
         ((segdef_t *)outP)->combine = combine;
@@ -333,7 +333,7 @@ void Pass2COMDEF()
 {
     while (inP < erecP) {       /* while more common definitions */
         if (! Lookup(((comnam_t *)inP)->name, &comdefInfoP, F_ALNMASK)) /* check found */
-            FatalErr(ERR219);   /* Phase() Error() */
+            fatal_Error(ERR219);   /* Phase() Error() */
         segmap[*inP] = comdefInfoP->linkedSeg;            /* record the final linked seg where this goes */
         inP = inP + 2 + ((comnam_t *)inP)->name[0];               /* past this def */
     }
@@ -344,7 +344,7 @@ void Pass2EXTNAMES()
 {
     while (inP < erecP) {       /* while more external definitions */
         if (! Lookup(inP, &symbolP, F_SCOPEMASK))  /* get the name */
-            FatalErr(ERR219);   /* phase Error() - didn't Lookup() !!! */
+            fatal_Error(ERR219);   /* phase Error() - didn't Lookup() !!! */
         AddExtMap(symbolP);
         if (symbolP->flags == F_EXTERN)  /* still an extern */
         {               /* Write() the unresolved reference info */
@@ -369,7 +369,7 @@ word outContentRelocOffset;
 static void BoundsChk(word addr)
 {
         if (addr < inContentStart || inContentEnd < addr)
-                FatalErr(ERR213);   /* fixup bounds Error() */
+                fatal_Error(ERR213);   /* fixup bounds Error() */
 }
 
 static void GetTypeAndSegHead(fixup_t *afixupP, word typeAndSeg)
@@ -432,7 +432,7 @@ void Pass2CONTENT()
         recLen = recLen - bytes2Read;
     }
     if (crc != 0)
-        FatalErr(ERR208);   /* Checksum() Error() */
+        fatal_Error(ERR208);   /* Checksum() Error() */
     GetRecord();            /* prime next record */
     if (savedRecLen > 1025)    /* we can't fix up a big record */
         return;
@@ -451,7 +451,7 @@ void Pass2CONTENT()
         if (inRecordP->rectyp == R_FIXEXT)
         {
             if ((fixType = *inP) - 1 > 2)    /* make sure combine is valid */
-                IllFmt();
+                fatal_RecFormat();
             inP = inP + 1;      /* past the record byte */
             while (inP < erecP) {       /* process all of the extref fixups */
                 BoundsChk(((extref_t *)inP)->offset); /* check fixup valid */
@@ -491,9 +491,9 @@ void Pass2CONTENT()
                 inP = inP + 1;
             }
             if (segIdx == 0)           /* ABS is illegal */
-                IllFmt();
+                fatal_RecFormat();
             if ((fixType = *inP) - 1 > 2)    /* bad fix up type ? */
-                IllFmt();
+                fatal_RecFormat();
             inP = inP + 1;          /* past fixup */
             while (inP < erecP) {           /* process all of the relocates */
                 BoundsChk(*(wpointer)inP);    /* fixup in range */
@@ -609,12 +609,17 @@ void Pass2LOCALS()
 void Phase2()
 {
 //    if ((membot = MEMORY) > topHeap)             /* check that memory still ok after overlay */
-//        FileError(ERR210, &toFileName[1], true);    /* insufficient memory */
+//        fatal_FileIO(ERR210, &toFileName[1], true);    /* insufficient memory */
     soutP = outP = GetLow(npbuf);                /* reserve the output buffer */
     eoutP = soutP + npbuf;
     InitExternsMap();
     Open(&tofilefd, &toFileName[1], 2, 0, &statusIO);       /* target file */
-    FileError(statusIO, &toFileName[1], true);
+    fatal_FileIO(statusIO, &toFileName[1], true);
+    // выводим имя конечного файла
+    ConOutStr("  OUT: ", 7);
+    ConOutStr(&toFileName[1], toFileName[0]);
+    ConOutStr("\n", strlen("\n"));
+
     EmitMODHDR();                       /* process the simple records */
     EmitCOMDEF();
     EmitPUBLICS();
@@ -626,7 +631,7 @@ void Phase2()
             curObjFile = curObjFile->link;
         else
         {
-            OpenObjFile();              /* Open() file */
+            OpenObjFile(FALSE);             /* Open() file */
             curModule = curObjFile->modList;            /* for each module in the file */
             while (curModule)
             {
@@ -637,33 +642,33 @@ void Phase2()
                     GetRecord();            /* and Load() its modhdr */
                 }
                 if (inRecordP->rectyp != R_MODHDR)
-                    FatalErr(ERR219); /* phase Error() */
+                    fatal_Error(ERR219); /* phase Error() */
                 InitExternsMap();           /* prepare for processing this module's extdef records */
                 while (inRecordP->rectyp != R_MODEND) { /* run through the whole module */
                     switch (inRecordP->rectyp) {
-                    case 0x00: IllegalRelo(); break;
+                    case 0x00: fatal_RelocRec(); break;
                     case 0x02: Pass2MODHDR(); break;  /* R_MODHDR */
                     case 0x04: ; break;           /* R_MODEND */
                     case 0x06: Pass2CONTENT(); break; /* R_CONTENT */
                     case 0x08: Pass2LINENO(); break;
-                    case 0x0A: IllegalRelo(); break;
-                    case 0x0C: IllegalRelo(); break;
-                    case 0x0E: FileError(ERR204, &inFileName[1], true); break; /* 0E Premature() eof */
+                    case 0x0A: fatal_RelocRec(); break;
+                    case 0x0C: fatal_RelocRec(); break;
+                    case 0x0E: fatal_FileIO(ERR204, &inFileName[1], true); break; /* 0E Premature() eof */
                     case 0x10: Pass2ANCESTOR(); break;
                     case 0x12: Pass2LOCALS(); break;
-                    case 0x14: IllegalRelo(); break;
+                    case 0x14: fatal_RelocRec(); break;
                     case 0x16: GetRecord(); break;
                     case 0x18: Pass2EXTNAMES(); break;
-                    case 0x1A: IllegalRelo(); break;
-                    case 0x1C: IllegalRelo(); break;
-                    case 0x1E: IllegalRelo(); break;
-                    case 0x20: BadRecordSeq(); break;
-                    case 0x22: BadRecordSeq(); break;
-                    case 0x24: BadRecordSeq(); break;
-                    case 0x26: BadRecordSeq(); break;
-                    case 0x28: BadRecordSeq(); break;
-                    case 0x2A: BadRecordSeq(); break;
-                    case 0x2C: BadRecordSeq(); break;
+                    case 0x1A: fatal_RelocRec(); break;
+                    case 0x1C: fatal_RelocRec(); break;
+                    case 0x1E: fatal_RelocRec(); break;
+                    case 0x20: fatal_RecSeq(); break;
+                    case 0x22: fatal_RecSeq(); break;
+                    case 0x24: fatal_RecSeq(); break;
+                    case 0x26: fatal_RecSeq(); break;
+                    case 0x28: fatal_RecSeq(); break;
+                    case 0x2A: fatal_RecSeq(); break;
+                    case 0x2C: fatal_RecSeq(); break;
                     case 0x2E: Pass2COMDEF(); break;
                     }
                 }
@@ -674,11 +679,11 @@ void Phase2()
     }   /* of do while */
     EmitEnding();   /* Write() final modend and eof record */
     Close(tofilefd, &statusIO);
-    FileError(statusIO, &toFileName[1], true);
+    fatal_FileIO(statusIO, &toFileName[1], true);
     if (haveTmpFile)       /* clean any tmp file up */
     {
         Close(tmpfilefd, &statusIO);
-        FileError(statusIO, &linkTmpFile[1], true);
+        fatal_FileIO(statusIO, &linkTmpFile[1], true);
         Delete(&linkTmpFile[1], &statusIO);
     }
 } /* Phase2() */

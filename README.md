@@ -44,14 +44,19 @@ LINK:
     Example:
       link @:f1:fileparams.txt
   - The maximum file name is now 8 characters.
+  - Return results in ERRORLEVEL.
+  - Print to screen source file name.
 
 LOCATE:
   - Fixed all found errors.
   - The maximum file name is now 8 characters.
+  - Return results in ERRORLEVEL.
+  - Print to screen source file name.
 
 OBJCPM:
   - Support for paths as in ISIS-II
   - The maximum file name is now 8 characters.
+  - Return results in ERRORLEVEL.
 
 PLM80:
   - Fixed all found errors.

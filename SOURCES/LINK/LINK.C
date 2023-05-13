@@ -95,7 +95,7 @@ void ConOutStr(pointer pstr, word count)
     Write(0, pstr, count, &statusIO);
 } /* ConOutStr() */
 
-void FatalErr(byte errCode)
+void fatal_Error(byte errCode)
 {
     ConOutStr(" ", 1);
     ConOutStr(&inFileName[1], inFileName[0]);
@@ -112,22 +112,22 @@ void FatalErr(byte errCode)
         BinAsc(recNum, 10, ' ', &recErrMsg[32], 5);
     ConOutStr(recErrMsg, sizeof(recErrMsg) - 1);
     Exit();
-} /* FatalErr() */
+} /* fatal_Error() */
 
-void IllFmt()
+void fatal_RecFormat()
 {
-    FatalErr(ERR218);   /* Illegal() record format */
-} /* IllFmt() */
+    fatal_Error(ERR218);   /* Illegal() record format */
+} /* fatal_RecFormat() */
 
-void IllegalRelo()
+void fatal_RelocRec()
 {
-    FatalErr(ERR212);   /* Illegal() relo record */
-} /* IllegalRelo() */
+    fatal_Error(ERR212);   /* Illegal() relo record */
+} /* fatal_RelocRec() */
 
-void BadRecordSeq()
+void fatal_RecSeq()
 {
-    FatalErr(ERR224);   /* Bad() record sequence */
-} /* BadRecordSeq() */
+    fatal_Error(ERR224);   /* Bad() record sequence */
+} /* fatal_RecSeq() */
 
 void Pstrcpy(pointer psrc, pointer pdst)
 {
@@ -167,7 +167,7 @@ bool Lookup(pointer pstr, symbol_t **pitemRef, byte mask)
 void WriteBytes(pointer bufP, word count)
 {
     Write(printFileNo, bufP, count, &statusIO);
-    FileError(statusIO, &printFileName[1], TRUE);
+    fatal_FileIO(statusIO, &printFileName[1], TRUE);
 } /* WriteBytes() */
 
 void WriteCRLF()
@@ -192,17 +192,19 @@ void WAEFnAndMod(pointer buffP, word count)
     WriteAndEcho(")\r\n", 3);
 } /* WAEFnAndMod */
 
-void Start()
+int Start()
 {
     ParseCmdLine();
     Phase1();
 //    Load(&filePath[1], 0, 0, &actRead, &statusIO);  /* Load() the overlay */
-//    FileError(statusIO, &filePath[1], TRUE);
+//    fatal_FileIO(statusIO, &filePath[1], TRUE);
 //    if (! Strequ(VERSION, overlayVersion, 4) )    /* make sure it is valid */
-//        FileError(ERR219, &filePath[1], TRUE);  /* phase Error() */
+//        fatal_FileIO(ERR219, &filePath[1], TRUE);  /* phase Error() */
     Phase2();
     Close(printFileNo, &statusIO);
-    Exit();
-
+    ConOutStr("\n", strlen("\n"));      // переходим на новую строку перед выходом
+    if (statusIO != ERROR_SUCCESS)
+        return 0;
+    return -1;
 } /* Start */
 

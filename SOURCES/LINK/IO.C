@@ -246,7 +246,7 @@ int main(int argc, char **argv)
         }
         if ((f = fopen(osfile.name, "rb")) == NULL)
         {
-            fprintf(stderr, "Error: can't open '%'\n", osfile.name);
+            fprintf(stderr, "Error: can't open '%s'\n", osfile.name);
             Exit();
         }
         strcat(_commandLine, " ");
@@ -275,8 +275,9 @@ int main(int argc, char **argv)
     _commandLinePtr = strcat(_commandLine, "\r\n");
 
     MEMORY = (pointer)malloc(AVAILMEM);
-    Start();
-    return 0;
+    if (Start())
+        return 0;
+    return 1;
 }
 
 pointer MemCk()
@@ -388,13 +389,14 @@ void Error(word ErrorNum)
 
 void Exit()
 {
+    ConOutStr("\n", strlen("\n"));      // переходим на новую строку перед выходом
     _exit(1);
 }
 
 void Load(pointer pathP, word LoadOffset, word swt, word entryP, wpointer statusP)
 {
-    fprintf(stderr, "load not implmented\n");
-    exit(2);
+    fprintf(stderr, "load not implmented\n\n");
+    exit(1);
 }
 
 

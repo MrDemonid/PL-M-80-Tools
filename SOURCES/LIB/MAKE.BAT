@@ -36,3 +36,4 @@ wlink name ..\..\Bin\lib sys nt op m op maxe=25 op q op symf @make.txt
 
 del *.obj
 del *.map
+del version.res

@@ -26,7 +26,7 @@
 
 #include "loc.h"
 
-void ErrChkReport(word errCode, pointer file, bool errExit)
+void fatal_FileIO(word errCode, pointer file, bool errExit)
 {
         word status;
 
@@ -40,4 +40,4 @@ void ErrChkReport(word errCode, pointer file, bool errExit)
                 if (errExit )
                         Exit();
         }
-} /* ErrChkReport */
+} /* fatal_FileIO */

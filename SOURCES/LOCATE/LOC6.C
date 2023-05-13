@@ -62,7 +62,7 @@ byte mto[] = "TO ";
 byte mtoand[] = "TO&";
 
 
-void CmdErr(word err)
+void fatal_CmdErr(word err)
 {
         if (PastFileName(cmdP) == cmdP)
         {
@@ -78,7 +78,7 @@ void CmdErr(word err)
         ConStrOut(scmdP, (word)(cmdP - scmdP) + 1);
         ConStrOut(crlf, 2);
         Exit();
-} /* CmdErr */
+} /* fatal_CmdErr */
 
 
 void SkipNonArgChars(pointer pch)
@@ -97,7 +97,7 @@ void ExpectChar(byte ch, byte err)
         if (ch == *cmdP)
                 SkipNonArgChars(cmdP + 1);
         else
-                CmdErr(err);
+                fatal_CmdErr(err);
 } /* ExpectChar */
 
 
@@ -123,7 +123,7 @@ void GetFile()
 {
         Spath(cmdP, &spathInfo, &statusIO);     /* try to parse file */
         if (statusIO > 0)
-                CmdErr(statusIO);
+                fatal_CmdErr(statusIO);
         SkipNonArgChars(PastFileName(cmdP));
 } /* GetFile */
 
@@ -147,7 +147,7 @@ void InitSegOrder()
 void ErrNotADisk()
 {
         MakeFullName(&spathInfo, &inFileName[1]);
-        ErrChkReport(ERR17, &inFileName[1], true);      /* not a disk file */
+        fatal_FileIO(ERR17, &inFileName[1], true);      /* not a disk file */
 } /* ErrNotADisk */
 
 
@@ -155,12 +155,12 @@ void GetPstrName(pointer pstr)
 {
 
         if (*cmdP < '?' || 'Z' < *cmdP)
-                CmdErr(ERR225); /* invalid Name() */
+                fatal_CmdErr(ERR225); /* invalid Name() */
         pstr[0] = 0;                    /* set length */
         while ('0' <= *cmdP && *cmdP <= '9' || '?' <= *cmdP && *cmdP <= 'Z') {
                 pstr[0] = pstr[0] + 1;
                 if (pstr[0] > 31)
-                        CmdErr(ERR226); /* name too long */
+                        fatal_CmdErr(ERR226); /* name too long */
                 pstr[pstr[0]] = *cmdP;
                 cmdP = cmdP + 1;
         }
@@ -194,7 +194,7 @@ void ProcessControls()
                                 cindex.lb = cindex.lb + controls[cindex.lb + 2] + 3;
                 }
         if (cid == 0)           /* check we have a valid command */
-                CmdErr(ERR229); /* unrecognised control */
+                fatal_CmdErr(ERR229); /* unrecognised control */
         SkipNonArgChars(cmdP + clen);
         switch (cid - 1) {
             case 0:             /* CODE, DATA, STACK, MEMORY */
@@ -223,6 +223,10 @@ void ProcessControls()
                         GetFile();
                         MakeFullName(&spathInfo, &printFileName[1]);
                         printFileName[0] = (byte)(PastFileName(&printFileName[1]) - &printFileName[1]);
+                        // גûגמהטל טלÿ MAP פאיכא
+                        ConStrOut("  MAP: ", 7);
+                        ConStrOut(&printFileName[1], printFileName[0]);
+                        ConStrOut("\n", strlen("\n"));
                         ExpectRP();
                 break;
             case 6:             /* ORDER */             /* process the order list */
@@ -264,7 +268,7 @@ void ProcessControls()
                         if (columns < 1 || columns > 3) /* must be 1-3 */
                         {
                                 cmdP = q;       /* for Error() reporting */
-                                CmdErr(ERR203); /* invalid syntax */
+                                fatal_CmdErr(ERR203); /* invalid syntax */
                         }
                 break;
             case 8:             /* / -> common */       /* find the common name or blank */

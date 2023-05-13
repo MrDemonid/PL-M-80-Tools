@@ -244,8 +244,10 @@ int main(int argc, char **argv)
     _commandLinePtr = strcat(_commandLine, "\r\n");
 
     MEMORY = (pointer)malloc(AVAILMEM);
-    Start();
-    return 0;
+    if (Start())
+        return 0;       // normal exit
+
+    return 1;           // ERRORLEVEL = 1
 }
 
 pointer MemCk()
@@ -357,13 +359,14 @@ void Error(word ErrorNum)
 
 void Exit()
 {
+    ConStrOut("\n", strlen("\n"));      // переходим на новую строку перед выходом
     _exit(1);
 }
 
 void Load(pointer pathP, word LoadOffset, word swt, word entryP, wpointer statusP)
 {
-    fprintf(stderr, "load not implmented\n");
-    exit(2);
+    fprintf(stderr, "load not implmented\n\n");
+    exit(1);
 }
 
 

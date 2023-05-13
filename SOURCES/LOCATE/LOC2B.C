@@ -60,14 +60,14 @@ record_t *lsoutP;
 void SeekOutFile(word mode, wpointer pblk, wpointer pbyt)
 {
     Seek(outputfd, mode, pblk, pbyt, &statusIO);
-    ErrChkReport(statusIO, &outFileName[1], true);
+    fatal_FileIO(statusIO, &outFileName[1], true);
 } /* SeekOutFile */
 
 
 void FlushOut()
 {
     Write(outputfd, outRecordP, (word)(outP - outRecordP), &statusIO);
-    ErrChkReport(statusIO, &outFileName[1], true);
+    fatal_FileIO(statusIO, &outFileName[1], true);
     outP = outRecordP;
 } /* FlushOut */
 
@@ -106,7 +106,7 @@ void EndRecord()
 
     /* check record not too long */
     if ((lsoutP->reclen = (word)(outP - &lsoutP->rectyp) - 2) > 1025 )
-        ErrChkReport(ERR211, &outFileName[1], true);    /* RECORD TOO LONG */
+        fatal_FileIO(ERR211, &outFileName[1], true);    /* RECORD TOO LONG */
     /* for what is there generate the CRC */
     crc = 0;
     for (pch = (pointer)lsoutP; pch <= outP - 1; pch++) {
@@ -254,22 +254,22 @@ void ProcModdat()
     ChkRead(3);     /* make sure the record and length are in the buffer */
     inP = iBufP;
     if (((moddat_t *)inP)->segId == SSTACK )
-        FatalErr(ERR238);   /* ILLEGAL STACK CONTENT RECORD */
+        fatal_Error(ERR238);   /* ILLEGAL STACK CONTENT RECORD */
 
     outSegType = SetWorkingSeg(((moddat_t *)inP)->segId);   /* set to ABS and get working base address */
     recSegBaseAddr = workingSegBase;
     /* set the bounds for this moddat record checking for wrap round */
     inFragment.saddr = recSegBaseAddr + ((moddat_t *)inP)->offset;
     if ((inFragment.eaddr = inFragment.saddr + recLen - 5) < inFragment.saddr )
-        IllegalRecord();    /* oops over 64k */
+        fatal_RecFormat();    /* oops over 64k */
     if (((moddat_t *)inP)->segId == SABS )  /* add this as a new frag */
         AddSegFrag(0, 0, inFragment.saddr, recLen - 4);
     else if ((segFlags[((moddat_t *)inP)->segId] & AMASK) == AUNKNOWN )
-        IllegalRecord();    /* align is invalid */
+        fatal_RecFormat();    /* align is invalid */
     if ((locRecLen = recLen) > 1025 )   /* long records only ok if ABS */
     {
         if (((moddat_t *)inP)->segId != 0 )
-            FatalErr(ERR211);   /* RECORD TOO LONG */
+            fatal_Error(ERR211);   /* RECORD TOO LONG */
         AddDataFrag(inFragment.saddr, inFragment.eaddr);
     }
     LoadModdat(((moddat_t *)inP)->segId);   /* suck the data in */
@@ -293,7 +293,7 @@ void ProcModdat()
             fixExtUsed = true;  /* note we have fixext record[s] */
             InitRecOut(R_FIXEXT);   /* initialise the fixext record */
             if ((loHiBoth = *inP /* inLoHiBoth */) - 1 > FBOTH - 1 )    /* check fixup type valid */
-                IllegalRecord();
+                fatal_RecFormat();
 
             *outP /* outLoHiBoth */ = loHiBoth; /* copy to the output */
             outP = outP + 1;
@@ -305,7 +305,7 @@ void ProcModdat()
                 if (loHiBoth == FBOTH )
                     FixupBoundsChk(((extfix_t *)outP)->offset + 1); /* check 2nd byte in range */
                 if ((((extfix_t *)outP)->namIdx = ((extfix_t *)inP)->namIdx) >= unsatisfiedCnt )
-                    BadRecordSeq(); /* name index out of range */
+                    fatal_RecSeq(); /* name index out of range */
                 ForceSOL();         /* make sure on new line to record the problem */
                 BinAsc(((extfix_t *)outP)->namIdx, 10, ' ', &aReferenceToUns[34], 5);
                 BinAsc(((extfix_t *)outP)->offset, 16, '0', &aReferenceToUns[44], 4);
@@ -329,7 +329,7 @@ void ProcModdat()
                 inP = inP + 1;              /* rest treat as rectyp FIXLOC */
             }
             if ((loHiBoth = *inP /* inLoHiBoth */) - 1 > FBOTH - 1 )    /* is fixup valid */
-                IllegalRecord();
+                fatal_RecFormat();
             inP = inP + 1;
 
             while (inP < erecP) {                   /* process the record */

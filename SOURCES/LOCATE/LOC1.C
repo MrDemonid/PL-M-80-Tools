@@ -103,13 +103,13 @@ void FlushPrintBuf()
     if (usePrintBuf)    /* only process if buffered print */
     {
         Write(printfd, spbufP, (word)(pbufP - spbufP), &statusIO);
-        ErrChkReport(statusIO, &printFileName[1], true);
+        fatal_FileIO(statusIO, &printFileName[1], true);
     }
     pbufP = spbufP; /* rest buffer pointer */
 }
 
 
-void FatalErr(byte errCode)
+void fatal_Error(byte errCode)
 {
     FlushPrintBuf();
     ConStrOut(" ", 1);
@@ -124,21 +124,21 @@ void FatalErr(byte errCode)
 }
 
 
-void IllegalRecord()
+void fatal_RecFormat()
 {
-    FatalErr(ERR218);   /* Illegal() Record() Format() */
+    fatal_Error(ERR218);   /* Illegal() Record() Format() */
 }
 
 
-void IllegalReloc()
+void fatal_RelocRec()
 {
-    FatalErr(ERR212);   /* Illegal() Relo() Record() */
+    fatal_Error(ERR212);   /* Illegal() Relo() Record() */
 }
 
 
-void BadRecordSeq()
+void fatal_RecSeq()
 {
-    FatalErr(ERR224);   /* Bad() Record() Sequence() */
+    fatal_Error(ERR224);   /* Bad() Record() Sequence() */
 }
 
 void PStrcpy(pointer psrc, pointer pdst)
@@ -168,7 +168,7 @@ void PrintString(pointer bufp, word cnt)
     else
     {   /* just use the operating system functions */
         Write(printfd, bufp, cnt, &statusIO);
-        ErrChkReport(statusIO, &printFileName[1], TRUE);
+        fatal_FileIO(statusIO, &printFileName[1], TRUE);
     }
 }
 
@@ -195,11 +195,11 @@ void ChkRead(word cnt)
     {
         memmove(sibufP, iBufP, bcnt);   /* move down bytes in buffer */
         Read(readfd, sibufP + bcnt, npbuf - bcnt, &actRead, &statusIO);
-        ErrChkReport(statusIO, &inFileName[1], true);
+        fatal_FileIO(statusIO, &inFileName[1], true);
         inBlk = inBlk + (inByt + (word)(iBufP - sibufP)) / 128;
         inByt = (inByt + iBufP - sibufP) % 128;
         if ((bcnt = bcnt + actRead) < cnt)
-            ErrChkReport(ERR204, &inFileName[1], TRUE);  /* Premature() EOF */
+            fatal_FileIO(ERR204, &inFileName[1], TRUE);  /* Premature() EOF */
         eiBufP = (iBufP = sibufP) + bcnt;
     }
 }
@@ -226,7 +226,7 @@ void GetRecord()
             ChkRead(bcnt + 1);
             inRecordP = (record_t *)iBufP;
             if ((erecP = ((pointer)inRecordP) + inRecordP->reclen + 2) >= eiBufP)
-                ErrChkReport(ERR204, &inFileName[1], true); /* premature EOF */
+                fatal_FileIO(ERR204, &inFileName[1], true); /* premature EOF */
         }
     }
     recLen = inRecordP->reclen;
@@ -234,17 +234,17 @@ void GetRecord()
     iBufP = erecP + 1;  /* update for next record */
     recNum = recNum + 1;
     if (inRecordP->rectyp > R_COMDEF || (inRecordP->rectyp & 1))    /* > 0x2e || odd */
-        IllegalReloc();
+        fatal_RelocRec();
     if (inRecordP->rectyp == R_MODDAT)
         return;
     if (recLen > 1025)
-        FatalErr(ERR211);   /* Record() too long */
+        fatal_Error(ERR211);   /* Record() too long */
     inCRC = 0;
     for (inbP = (pointer)inRecordP; inbP <= erecP; inbP++) {
         inCRC = inCRC + *inbP;
     }
     if (inCRC != 0)
-        FatalErr(ERR208);   /* checksum Error() */
+        fatal_Error(ERR208);   /* checksum Error() */
 }
 
 
@@ -256,7 +256,7 @@ void ObjSeek(word blk, word byt)
             && iBufP < eiBufP)
             return;
     Seek(readfd, SEEKABS, &blk, &byt, &statusIO);
-    ErrChkReport(statusIO, &inFileName[1], true);
+    fatal_FileIO(statusIO, &inFileName[1], true);
     iBufP = eiBufP;
     ChkRead(1); /* Read() the buffer */
     inBlk = blk;
@@ -272,7 +272,7 @@ void SeekPagingFile(byte para)
 
     blk = para * 2;
     Seek(tmpfd, SEEKABS, &blk, &zeroByt, &statusIO);
-    ErrChkReport(statusIO, &tmpFileName[1], true);
+    fatal_FileIO(statusIO, &tmpFileName[1], true);
 }
 
 
@@ -288,7 +288,7 @@ void PageOut(byte page, pointer bufp)
     }
     SeekPagingFile(pt->fileIdx);
     Write(tmpfd, bufp, 256, &statusIO); /* Write() the page out */
-    ErrChkReport(statusIO, &tmpFileName[1], true);
+    fatal_FileIO(statusIO, &tmpFileName[1], true);
     pt->pageIdx = 0xfe; /* flag as paged out */
 }
 
@@ -320,7 +320,7 @@ void AnotherPage(byte page)
         havePagingFile = true;
         Delete(&tmpFileName[1], &statusIO);
         Open(&tmpfd, &tmpFileName[1], 3, false, &statusIO);
-        ErrChkReport(statusIO, &tmpFileName[1], true);
+        fatal_FileIO(statusIO, &tmpFileName[1], true);
     }
 
     pageTab1P[page].state = 0xff;   /* mark this page as now free */
@@ -365,10 +365,10 @@ pointer AddrInCache(word addr)
         baddr.bp = AllocNewPage(High(addr));        /* Alloc page in cache */
         SeekPagingFile(pt->fileIdx);        /* Seek() to its place in the paging file */
         Read(tmpfd, baddr.bp, 256, &actRead, &statusIO);    /* Read() in */
-        ErrChkReport(statusIO, &tmpFileName[1], true);
+        fatal_FileIO(statusIO, &tmpFileName[1], true);
         if (actRead != 256)         /* if problems & ~ :BB: out file then Error() */
             if (outRealFile)
-                ErrChkReport(ERR204, &tmpFileName[1], true);    /* premature EOF */
+                fatal_FileIO(ERR204, &tmpFileName[1], true);    /* premature EOF */
         return baddr.bp + Low(addr);        /* return the mapped address */
     }
     baddr.hb = pt->pageIdx;     /* page offset in cache */
@@ -386,7 +386,7 @@ static void Alloc(word cnt)
             AnotherPage(pageCacheSize); /* or paging the last page to disk */
 
         if ((pageCacheSize = High((word)(botHeap - baseMemImage)) - 1) == 0xff) /* check we haven't eliminated all cache */
-            ErrChkReport(ERR210, &inFileName[1], true); /* Insufficient() memory */
+            fatal_FileIO(ERR210, &inFileName[1], true); /* Insufficient() memory */
     }
 }
 
@@ -556,10 +556,10 @@ void LoadModdat(byte segId)
     ChkRead(1);
     inbP = iBufP++;
     if ((byte)(inCRC + *inbP) != 0)                 /* sanity check */
-        FatalErr(ERR208);   /* Checksum() Error() */
+        fatal_Error(ERR208);   /* Checksum() Error() */
 }
 
-void Start()
+int Start()
 {
 //  baseMemImage = pageTab2P = controls;    /* once we have processed args overWrite area */
     pageTab2P = (page2_t *)(baseMemImage = MEMORY); // isis version reuses memory
@@ -568,6 +568,8 @@ void Start()
     LocateFile();
     FlushPrintBuf();
     Close(printfd, &statusIO);
-    Exit();
-
+    ConStrOut("\n", strlen("\n"));      // переходим на новую строку перед выходом
+    if (statusIO == ERROR_SUCCESS)
+        return -1;
+    return 0;
 }
