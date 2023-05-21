@@ -118,7 +118,101 @@ bool  skippingCOND = false;
 word ifDepth = 0;
 
 
-void CreateTxi1File()
+/*
+  стек для сохранения позиций начала блоков в файле tx1
+*/
+unsigned long blocksStack[36];    // макс. вложенность блоков
+int blocksSP = 0;
+
+
+void SaveBlockPos()
+{
+    loc_t posBlock;
+    unsigned long blk, byt;
+
+    if (++blocksSP > 34)
+    {
+        FatalError(ERR27);      /* LIMIT EXCEEDED: NUMBER OF DO BLOCKS */
+    }
+    if (tx1File.aftn != 0)
+    {
+        TellF(&tx1File, &posBlock);
+        blk = posBlock.blk;
+        byt = posBlock.byt;
+    } else {
+        blk = 0;
+        byt = 0;
+    }
+    blocksStack[blocksSP] = (blk * 128 + byt) + tx1File.curoff;
+}
+
+void RemoveBlockPos()
+{
+    if (blocksSP <= 0)
+        FatalError(ERR205);      /* ILLEGAL NESTING OF BLOCKS, ENDS NOT BALANCED */
+    blocksSP--;
+}
+
+/*
+  осуществляет помену L_DO на L_REPEAT
+*/
+void DoToRepeat()
+{
+    loc_t curBlk;
+    loc_t endBlk;
+    unsigned long blk, byt, pos, fpos;
+    char buf;
+
+    if (blocksSP <= 0)
+        FatalError(ERR205);      /* ILLEGAL NESTING OF BLOCKS, ENDS NOT BALANCED */
+
+    if (tx1File.aftn != 0)
+    {
+        TellF(&tx1File, &curBlk);
+        blk = curBlk.blk;
+        byt = curBlk.byt;
+        fpos = blk * 128 + byt;
+    } else {
+        fpos = 0;
+    }
+    pos = blocksStack[blocksSP];
+    if (pos >= fpos)
+    {
+        /*
+          код находится в буфере
+        */
+        pos -= fpos;
+        if (tx1Buf[pos] != L_DO)
+            FatalError(ERR214); /* COMPILER ERROR: OPERAND CANNOT BE TRANSFORMED */
+        else
+            tx1Buf[pos] = L_REPEAT;
+
+    } else {
+        /*
+          код находится в файле
+        */
+        Fflush(&tx1File);           // сбрасываем остатки буфера в файл
+        TellF(&tx1File, &endBlk);   // сохраняем текущую позицию в файле
+        curBlk.blk = pos / 128;
+        curBlk.byt = pos % 128;
+        SeekF(&tx1File, &curBlk);
+        ReadF(&tx1File, &buf, 1, &tx1File.actual);
+        if (tx1File.actual)
+        {
+            buf = L_REPEAT;
+            SeekF(&tx1File, &curBlk);
+            WriteF(&tx1File, &buf, 1);
+        } else
+            FatalError(ERR214); /* COMPILER ERROR: OPERAND CANNOT BE TRANSFORMED */
+
+        SeekF(&tx1File, &endBlk);
+    }
+}
+
+
+
+
+void CreateTx1File()
 {
     word tmp;
 
@@ -126,13 +220,13 @@ void CreateTxi1File()
     OpenF(&tx1File, 3);
     CreatF(&tx1File, tx1Buf, 1280, 2);
     tx1File.curoff = tmp;
-} /* CreateTxi1File() */
+} /* CreateTx1File() */
 
 void WriteTx1(pointer buf, word len)
 {
     if (tx1File.aftn == 0)
         if (tx1File.curoff > 1024)
-            CreateTxi1File();
+            CreateTx1File();
         else {
             memmove(&tx1Buf[tx1File.curoff], buf, len);
             tx1File.curoff = tx1File.curoff + len;
@@ -144,7 +238,7 @@ void WriteTx1(pointer buf, word len)
 void RewindTx1()
 {
     if (tx1File.aftn == 0)
-        CreateTxi1File();
+        CreateTx1File();
     Fflush(&tx1File);
     Rewind(&tx1File);
 } /* RewindTx1() */

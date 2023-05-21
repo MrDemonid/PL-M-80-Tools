@@ -998,7 +998,7 @@ bool ExitBlk()
 }
 
 
-void Sub_58F5(byte arg1b)
+void putBufTx1Error(byte arg1b)
 {
     fatalErrorCode = arg1b;
     recBufTx1[0] = 0x9a;
@@ -1089,16 +1089,16 @@ void Sub_5B96(byte arg1b, byte arg2b)
 }
 
 
-void Sub_5C1D(byte arg1b)
+void Sub_5C1D(byte reg16)
 {
     byte i;
     Sub_597E();
-    i = bC140[parInStack] = bC04E[arg1b];
-    if (boC072[arg1b])
+    i = bC140[parInStack] = bC04E[reg16];
+    if (boC072[reg16])
         tx2op3[i] = parInStack;
 
-    if (arg1b != 0)
-        bC0C3[parInStack] = (bC045[arg1b] << 4) | (bC0A8[arg1b] & 0xf);
+    if (reg16 != 0)
+        bC0C3[parInStack] = (bC045[reg16] << 4) | (bC0A8[reg16] & 0xf);
     else
         bC0C3[parInStack] = 0xB0;
 }
@@ -1431,7 +1431,7 @@ void GetTx2Item()
 }
 
 
-void Sub_652B()
+void fixT2Rec()
 {
     if (curOp == T2_MODULE) {
         if (tx2opc[tx2qp - 1] == T2_LABELDEF) {
@@ -1480,7 +1480,7 @@ void FillTx2Q()
     {
         GetTx2Item();
         curOp = tx2opc[tx2qp];
-        Sub_652B();
+        fixT2Rec();
         if (tx2qp == 4)
         {
             // ничего не считали

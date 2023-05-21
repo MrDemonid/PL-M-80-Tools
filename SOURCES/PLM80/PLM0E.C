@@ -798,7 +798,9 @@ static void ParseDeclType()
     ParseDclInitial();
 }
 
-
+/*
+  разбор и создание идентификатора типа LITERALLY
+*/
 static void ParseLiterally()
 {
     if (YylexNotMatch(T_STRING)) {

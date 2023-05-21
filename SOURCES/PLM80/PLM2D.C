@@ -57,8 +57,10 @@ static bool Sub_7254(byte arg1b, word arg2w)
     return true;
 }
 
-
-static word Sub_72F2()
+/*
+  Мат. операция над константами
+*/
+static word MathConstant()
 {
     switch (bC266) {
     case 0: return wC267;
@@ -138,7 +140,7 @@ void Sub_717B()
         Sub_5FBF(bC26F, &wC26B, &wC26D);
         if (Sub_7254((b5112[bC266] >> 3) & 7, wC26D)) {
             Sub_611A();
-            p = Sub_72F2();
+            p = MathConstant();
             Sub_73C5();
             if (bC272 == 0 && bC273 == 8)
                 p = p & 0xFF;

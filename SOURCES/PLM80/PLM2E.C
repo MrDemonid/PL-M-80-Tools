@@ -348,7 +348,7 @@ void cf_7DA9()
 
     Sub_7F19();
     if (bC298 == 0x17)
-        Sub_58F5(ERR214);
+        putBufTx1Error(ERR214);
     else if (bC298 == 0x16) {
         bC0C1[bC295] = bC0BF[bC295];
         curTx2aux1b[bC295] = b528D[bC0C1[bC295]];

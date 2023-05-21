@@ -154,6 +154,8 @@ static void ParseStartStmt()
         stmtStartCode = 14;
     else if (stmtStartToken == T_CONTINUE)
         stmtStartCode = 15;
+    else if (stmtStartToken == T_UNTIL)
+        stmtStartCode = S_END;            // завершаем цикл
     else {
         TokenErrorAt(ERR29);    /* ILLEGAL STATEMENT */
         stmtStartCode = S_SEMICOLON;
@@ -535,6 +537,7 @@ static void State12()
         PushStateWord(stmtLabels[stmtLabelCnt]);       // push the address of the last label
     else
         PushStateWord(0);                              // or null if none
+    SaveBlockPos();      // сохраняем позицию DO, на случай подмены на REPEAT
     if (YylexMatch(T_IDENTIFIER)) {
         WrByte(L_DOLOOP);               // convert <iterative do statement> to lex format
         WrLexToken();                   // the <index variable>
@@ -578,14 +581,26 @@ static void State13()
 {
     offset_t labelPtr;
 
-    WrLabelDefs();                  // write labels
-    PopBlock();                     // restore scope to parent block
-    PopStateWord(&labelPtr);        // get the do block label
-    if (YylexMatch(T_IDENTIFIER))   // if we have "end identifier" do they match
-        if (curSymbolP != labelPtr)
-            TokenErrorAt(ERR20);    /* MISMATCHED IDENTIFIER AT END OF BLOCK */
-    WrByte(L_END);                  // write lex END token
-    ExpectSemiColon();
+    if (tokenType == T_UNTIL)
+    {
+        DoToRepeat();                   // подменяем DO на REPEAT
+        RemoveBlockPos();
+        WrByte(L_END);                  // write lex UNTIL token
+        ParseExpresion(T_SEMICOLON);
+        WrLabelDefs();                  // write labels
+        PopBlock();                     // restore scope to parent block
+        PopStateWord(&labelPtr);        // get the do block label
+    } else {
+        RemoveBlockPos();
+        WrLabelDefs();                  // write labels
+        PopBlock();                     // restore scope to parent block
+        PopStateWord(&labelPtr);        // get the do block label
+        if (YylexMatch(T_IDENTIFIER))   // if we have "end identifier" do they match
+            if (curSymbolP != labelPtr)
+                TokenErrorAt(ERR20);    /* MISMATCHED IDENTIFIER AT END OF BLOCK */
+        WrByte(L_END);                  // write lex END token
+        ExpectSemiColon();
+    }
 }
 
 // parse case <unit>... <ending>

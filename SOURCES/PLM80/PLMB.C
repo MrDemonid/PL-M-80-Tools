@@ -56,7 +56,8 @@ static byte builtins[] = {
     "\x4SIZE\x12\x1\x2"
     "\x8STACKPTR\x13\0\x3"
     "\x4TIME\x14\x1\0"
-    "\x4ZERO\x15\0\x2" };
+    "\x4ZERO\x15\0\x2"
+    };
 
 
 // the plm reserved keywords - format
@@ -103,7 +104,10 @@ static byte keywords[] = {
     "\x5WHILE\x3B"
     "\x3XOR\xC"
     "\x5" "BREAK\x3C"
-    "\x8" "CONTINUE\x3D" };
+    "\x8" "CONTINUE\x3D"
+    "\x6" "REPEAT\x3E"
+    "\x5" "UNTIL\x3F"
+    };
 
 
 
@@ -150,11 +154,18 @@ static void InitInfoAndSym()
     else
         botMem = ov1Boundary;
     botMem = botMem + 256;          // reserve space
-    // heap memory is split
-    // info builds up, symbol builds down with hashChains table above
+    /*
+      выделяем память под хэш-таблицу (64 указателя)
+    */
     hashChainsP = (topMem + 1 - 64 * sizeof(offset_t)); // allocate hashChains table
+    /*
+      выделяем память под имена идентификаторов, включая встроенные
+      функции и зарезервированные слова; имена хранятся в виде
+      байта длины и собственно имени.
+    */
     topSymbol = hashChainsP - 1;
     botSymbol = topSymbol + 1;
+
     botInfo = botMem;
     topInfo = botInfo + 1;
     for (i = 0; i <= 63; i++)       // initialise the hashCHains

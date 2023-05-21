@@ -583,7 +583,6 @@ static void  ChkEndOfStmt()
     }
 }
 
-
 /*
   завершаем цикл DO <var> = n TO m
 */
@@ -750,6 +749,42 @@ static void IterativeDoStatement()
     WrTx2Item1Arg(T2_LOCALLABEL, v);
 }
 
+/*
+  начинаем цикл REPEAT .. UNTIL <?>
+*/
+static void ParseREPEAT()
+{
+    word p, q, r;
+
+    PushControl(DO_REPEAT);
+    p = NewLocalLabel();
+    r = NewLocalLabel();
+    q = NewLocalLabel();
+    hNodes[controlSP] = p;      // метка начала цикла
+    nNodes[controlSP] = r;      // метка для CONTINUE
+    eNodes[controlSP] = q;      // метка конца цикла
+    r = WrTx2Item1Arg(T2_LOCALLABEL, p);
+}
+
+/*
+  завершаем цикл REPEAT ... UNTIL <?>
+*/
+static void ParseUNTIL()
+{
+    word r, lBeg, lEnd, lNxt;
+
+    lBeg = hNodes[controlSP];           // метка начала цикла
+    lEnd = eNodes[controlSP];           // метка конца цикла
+    lNxt = nNodes[controlSP];           // метка для возможного CONTINUE
+
+    WrTx2Item1Arg(T2_LOCALLABEL, lNxt);
+    r = Sub_6917();
+    WrTx2Item2Arg(T2_JMPFALSE, lBeg, Sub_42EF(r));
+    WrTx2Item1Arg(T2_LOCALLABEL, lEnd);
+    ChkEndOfStmt();
+}
+
+
 static void ParseEND()
 {
     word p;
@@ -772,6 +807,9 @@ static void ParseEND()
         p = WrTx2Item(T2_ENDCASE);
         break;
     case DO_FOR: ParseEndFOR();
+        break;
+    case DO_REPEAT:
+        ParseUNTIL();
         break;
     }
     PopControl();
@@ -797,7 +835,7 @@ unsigned int FindControl(void)
             */
             break;
         }
-        if (stkBlocks[curSP] == DO_WHILE || stkBlocks[curSP] == DO_FOR)
+        if (stkBlocks[curSP] == DO_WHILE || stkBlocks[curSP] == DO_FOR || stkBlocks[curSP] == DO_REPEAT)
             return curSP;
         curSP--;
     }
@@ -841,7 +879,7 @@ static void ParseCONTINUE()
         {
             WrTx2Item1Arg(T2_JMP, hNodes[cycleSP]);
 
-        } else if (stkBlocks[cycleSP] == DO_FOR)
+        } else if (stkBlocks[cycleSP] == DO_FOR || stkBlocks[cycleSP] == DO_REPEAT)
         {
             WrTx2Item1Arg(T2_JMP, nNodes[cycleSP]);
         }
@@ -1004,6 +1042,7 @@ void ParseLexItems()
             break;
         case 21: ParseBREAK(); break;   /* L_BREAK */
         case 22: ParseCONTINUE(); break;/* L_CONTINUE */
+        case 23: ParseREPEAT(); break;  /* L_REPEAT */
         }
         GetTx1Item();
     }

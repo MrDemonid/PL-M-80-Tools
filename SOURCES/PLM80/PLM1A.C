@@ -35,7 +35,9 @@ static byte tx1Aux1Map[] = {
           I_MINUSSIGN, I_PLUS, I_MINUS, I_STAR, I_SLASH, I_MOD, I_COLONEQUALS, I_AND,
           I_OR, I_XOR, I_NOT, I_LT, I_LE, I_EQ, I_NE, I_GE,
           I_GT, 0, 0, 0, 0, 0, 0, 0,                    // GT, COMMA, LPAREN, RPAREN, PERIOD, TO, BY, INVALID
-          0, 0, 0, 0, 0, 0};                            // MODULE, XREFUSE, XREFDEF, EXTERNAL, BREAK, CONTINUE
+          0, 0, 0, 0,                                   // MODULE, XREFUSE, XREFDEF, EXTERNAL,
+          0, 0, 0, 0};                                  // BREAK, CONTINUE, REPEAT, UNTIL
+
 
 byte tx1ToTx2Map[] = {
     T2_LINEINFO, T2_SYNTAXERROR, T2_TOKENERROR, T2_LIST, T2_NOLIST, T2_CODE, T2_NOCODE, T2_EJECT,
@@ -47,7 +49,7 @@ byte tx1ToTx2Map[] = {
     T2_OR, T2_XOR, T2_NOT, T2_LT, T2_LE, T2_EQ, T2_NE, T2_GE,
     T2_GT, 0 /* COMMA */, 0 /* LPAREN */, 0 /* RPAREN */, 0 /* PERIOD */, 0 /* TO */, 0 /* BY */, 0 /* INVALID */,
     T2_MODULE, 0 /* XREFUSE */, 0 /* XREFDEF */, 0 /* EXTERNAL */,
-    T2_BREAK, T2_CONTINUE};
+    T2_BREAK, T2_CONTINUE, 0 /* REPEAT */, 0 /*UNTIL */ };
 
 
 
@@ -67,7 +69,8 @@ byte tx1Aux2Map[] = {
         0xC0,0xC0,0xC0,0xC0,0xC0,0xC0, 0x80,0xC0,       // MINUSSIGN, PLUS, MINUS, STAR, SLASH, MOD, COLONEQUALS, AND
         0xC0,0xC0, 0x80,0xC0,0xC0,0xC0,0xC0,0xC0,       // OR, XOR, NOT, LT  , LE, EQ, NE, GE
         0xC0, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0,    // GT, COMMA, LPAREN, RPAREN, PERIOD, TO, BY, INVALID
-        0x20, 0, 0, 0x10, 0, 0};                        // MODULE, XREFUSE, XREFDEF, EXTERNAL, BREAK, CONTINUE
+        0x20, 0, 0, 0x10,                               // MODULE, XREFUSE, XREFDEF, EXTERNAL
+        0, 0, 0, 0};                                    // BREAK, CONTINUE, REPEAT, UNTIL
 
 /*
   номер функции для ParseLexItems()
@@ -81,7 +84,8 @@ byte lexHandlerIdxTable[] = {
     0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12,     // MINUSSIGN, PLUS, MINUS, STAR, SLASH, MOD, COLONEQUALS, AND
     0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12,     // OR, XOR, NOT, LT  , LE, EQ, NE, GE
     0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12, 0x12,     // GT, COMMA, LPAREN, RPAREN, PERIOD, TO, BY, INVALID
-    0x12, 0x12, 0x12, 0x14, 0x15, 0x16};                // MODULE, XREFUSE, XREFDEF, EXTERNAL, BREAK, CONTINUE
+    0x12, 0x12, 0x12,                                   // MODULE, XREFUSE, XREFDEF, EXTERNAL
+    0x14, 0x15, 0x16, 0x17};                            // BREAK, CONTINUE, REPEAT
 
 
 byte tx1ItemLengths[] = {
@@ -90,7 +94,7 @@ byte tx1ItemLengths[] = {
     0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 2, 2, 2, 2, 2,255,0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 2, 2, 2, 0, 0};
+    0, 2, 2, 2, 0, 0, 0, 0};
 
 
 byte icodeToTx2Map[] = {

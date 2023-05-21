@@ -422,7 +422,7 @@ void Sub_87CB()
 } /* Sub_87CB() */
 
 
-void m2_doPROCEDURE()
+void m2p3_doPROCEDURE()
 {
     if (EnterBlk())
     {

@@ -1153,7 +1153,7 @@ static void GetCodeLine()
                 isNonCtrlLine = true;       // first none control line (even a comment) stops primary controls
                 return;                     // we have a line
             }
-        } else if (srcFileIdx == 0) {       // EOF at end of main file
+        } else if (srcFileIdx < 10) {       // EOF at end of main file
             if (ifDepth != 0)               // oops we are nested (error code seems to be incorrect)
                 SyntaxError(ERR188);        /* MISPLACED RESTORE OPTION */
             inChrP = "/*'/**/EOF   ";       // string to make sure any comments, strings are closed and EOF

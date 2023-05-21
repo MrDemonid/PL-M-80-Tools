@@ -78,7 +78,7 @@ void Sub_9BB0()
 /*
   обрабатываем T2_CALL
 */
-void m2_doCALL()
+void m2p3_doCALL()
 {
     byte i, j, k;
     pointer pbyt;
@@ -131,7 +131,7 @@ static void Sub_9EAA(byte arg1b, byte arg2b)
             *pb_C2EB = *pb_C2EB | b9BAC[arg2b];
 }
 
-void m2_doCALLVAR()
+void m2p3_doCALLVAR()
 {
     byte i;
 
@@ -291,9 +291,9 @@ void m2_Parse3()
         {
             case 0:
                 if (curOp == T2_CALL)
-                    m2_doCALL();
+                    m2p3_doCALL();
                 else if (curOp == T2_CALLVAR)
-                    m2_doCALLVAR();
+                    m2p3_doCALLVAR();
                 else if (curOp == T2_BEGMOVE)
                     m2_doBEGMOVE();
                 else
@@ -309,7 +309,7 @@ void m2_Parse3()
                 break;
             case 2:
                 if (curOp == T2_PROCEDURE)
-                    m2_doPROCEDURE();
+                    m2p3_doPROCEDURE();
                 else
                     cf_994D();
                 break;

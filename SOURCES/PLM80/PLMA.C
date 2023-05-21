@@ -25,6 +25,10 @@
 
 #include "plm.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+
+
 static byte signonMsg[] = "\r\nISIS-II PL/M-80 COMPILER ";
 static byte noMemMsg[] = "NOT ENOUGH MEMORY FOR A COMPILATION";
 static byte aIxi[] = ".IXI";
@@ -121,6 +125,7 @@ static void GetCmdLine()
         PrintStr("**", 2);
     }
 } /* GetCmdLine() */
+
 
 static void ParseInvokeName()
 {
@@ -284,6 +289,20 @@ static void InitFilesAndDefaults()
 void SignOnAndGetSourceName()
 {
     memmove(szVersion, verNo, 4);
+    /*
+      clear files structures
+    */
+    memset(&srcFil , 0, sizeof(file_t));
+    memset(&lstFil , 0, sizeof(file_t));
+    memset(&objFile, 0, sizeof(file_t));
+    memset(&conFile, 0, sizeof(file_t));
+    memset(&tx1File, 0, sizeof(file_t));
+    memset(&tx2File, 0, sizeof(file_t));
+    memset(&atFile , 0, sizeof(file_t));
+    memset(&nmsFile, 0, sizeof(file_t));
+    memset(&xrfFile, 0, sizeof(file_t));
+    memset(&ixiFile, 0, sizeof(file_t));
+    //
     InitF(&conFile, "CONSOL", ":CI: ");
     OpenF(&conFile, 1);
     topMem = MemCk() - 12;

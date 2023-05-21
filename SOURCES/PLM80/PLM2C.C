@@ -37,16 +37,28 @@ static void Sub_6C54(byte arg1b)
 
 
 
-static void Sub_6C73(byte arg1b)
+/*
+  Пробуем оптимизировать код
+*/
+static void m2p2_CheckOptimize(byte arg1b)
 {
     if (OPTIMIZE)
-        while (tx2qp - 1 > arg1b) {
+        while (tx2qp - 1 > arg1b)
+        {
             arg1b = arg1b + 1;
-            if (tx2opc[arg1b] == curOp) {
-                if (tx2op1[arg1b] == tx2op1[tx2qp]) {
-                    if (tx2op2[arg1b] == tx2op2[tx2qp]) {
-                        if (tx2Aux1b[arg1b] == tx2Aux1b[tx2qp]) {
-                            if (tx2op3[arg1b] != 0xff00) {
+            if (tx2opc[arg1b] == curOp)
+            {
+                if (tx2op1[arg1b] == tx2op1[tx2qp])
+                {
+                    if (tx2op2[arg1b] == tx2op2[tx2qp])
+                    {
+                        if (tx2Aux1b[arg1b] == tx2Aux1b[tx2qp])
+                        {
+                            if (tx2op3[arg1b] != 0xff00)
+                            {
+                                /*
+                                  оставляем ссылку на пред. значение?
+                                */
                                 tx2opc[tx2qp] = T2_OPTBACKREF;
                                 tx2op1[tx2qp] = arg1b;
                                 return;
@@ -56,7 +68,8 @@ static void Sub_6C73(byte arg1b)
                 }
             }
         }
-    if ((curOpFlags & 0xc0) == 0) {
+    if ((curOpFlags & 0xc0) == 0)
+    {
         Sub_6C54((byte)tx2op1[tx2qp]);
         Sub_6C54((byte)tx2op2[tx2qp]);
     }
@@ -66,7 +79,8 @@ static void Sub_6C73(byte arg1b)
 
 static bool isPtrVar;  // указатель (BASED, AT, INDEX и тд)
 
-static void Sub_6EAB(wpointer arg1wP)
+
+static void m2p2_doOptimize(wpointer arg1wP)
 {
     if (*arg1wP != 0) {
         if (tx2opc[*arg1wP] == T2_OPTBACKREF)
@@ -157,8 +171,8 @@ void Sub_7055()
 
 static void Sub_6D52()
 {
-    Sub_6EAB(&tx2op1[tx2qp]);
-    Sub_6EAB(&tx2op2[tx2qp]);
+    m2p2_doOptimize(&tx2op1[tx2qp]);
+    m2p2_doOptimize(&tx2op2[tx2qp]);
     if (curOp == T2_COLONEQUALS)
         Sub_7055();
     else if (procCallDepth > 0) {
@@ -168,7 +182,7 @@ static void Sub_6D52()
             procCallDepth = procCallDepth - 1;
         else if (curOp == T2_MOVE || curOp == T2_CALLVAR) {
             procCallDepth = procCallDepth - 1;
-            Sub_6EAB(&tx2op3[tx2qp]);
+            m2p2_doOptimize(&tx2op3[tx2qp]);
             Sub_6C54((byte)tx2op3[tx2qp]);
         }
         else
@@ -179,7 +193,7 @@ static void Sub_6D52()
     } else {
         tx2op3[tx2qp] = 0;
         Sub_6EE1(tx2qp);
-        Sub_6C73(Sub_6FE2());
+        m2p2_CheckOptimize(Sub_6FE2());
         if (curOp == T2_JMPFALSE) {
             if (tx2opc[tx2qp - 1] == T2_NOT) {
                 boC20F = true;
@@ -206,11 +220,11 @@ static void m2p2_doIdnOrNum()
         {
             curInfoP = tx2op1[tx2qp];
             if (TestInfoFlag(F_AT))
-                Sub_6C73(bC259);
+                m2p2_CheckOptimize(bC259);
             else
-                Sub_6C73(bC25A);
+                m2p2_CheckOptimize(bC25A);
         } else
-            Sub_6C73(bC25A);
+            m2p2_CheckOptimize(bC25A);
     }
 }
 

@@ -92,7 +92,8 @@ enum {L_LINEINFO = 0, L_SYNTAXERROR = 1, L_TOKENERROR = 2, L_LIST = 3, L_NOLIST 
     L_NOT = 50, L_LT = 51  , L_LE = 52, L_EQ = 53, L_NE = 54,
     L_GE = 55, L_GT = 56, L_COMMA = 57, L_LPAREN = 58, L_RPAREN = 59,
     L_PERIOD = 60, L_TO = 61, L_BY = 62, L_INVALID = 63, L_MODULE = 64,
-    L_XREFUSE = 65, L_XREFDEF = 66, L_EXTERNAL = 67, L_BREAK = 68, L_CONTINUE = 69};
+    L_XREFUSE = 65, L_XREFDEF = 66, L_EXTERNAL = 67,
+    L_BREAK = 68, L_CONTINUE = 69, L_REPEAT = 70, L_UNTIL = 71 };
 
 /* character classes */
 enum {CC_BINDIGIT = 0, CC_OCTDIGIT = 1, CC_DECDIGIT = 2, CC_HEXCHAR = 3, CC_ALPHA = 4,
@@ -114,7 +115,7 @@ enum {T_IDENTIFIER = 0, T_NUMBER = 1, T_STRING = 2, T_PLUSSIGN = 3, T_MINUSSIGN 
     T_EXTERNAL = 45, T_INITIAL = 46, T_INTERRUPT = 47, T_LABEL = 48, T_LITERALLY = 49,
     T_PUBLIC = 50, T_REENTRANT = 51, T_STRUCTURE = 52, T_BY = 53, T_CASE = 54,
     T_ELSE = 55, T_EOF = 56, T_THEN = 57, T_TO = 58, T_WHILE = 59,
-    T_BREAK = 60, T_CONTINUE = 61};
+    T_BREAK = 60, T_CONTINUE = 61, T_REPEAT = 62, T_UNTIL = 63};
 
 /* start statement codes */
 enum { S_IDENTIFIER = 0, S_SEMICOLON, S_CALL, S_DECLARE, S_DISABLE, S_DO,
@@ -147,7 +148,8 @@ enum {T2_LT = 0, T2_LE = 1, T2_NE = 2, T2_EQ = 3, T2_GE = 4,
     T2_IDENTIFIER = 172, T2_NUMBER = 173, T2_BIGNUMBER = 174,
     T2_STACKPTR = 181, T2_SEMICOLON = 182, T2_OPTBACKREF = 183, T2_CASE = 184,
     T2_ENDCASE = 185, T2_ENDPROC = 186, T2_LENGTH = 187, T2_LAST = 188, T2_SIZE = 189,
-    T2_BEGCALL = 190, T2_BREAK = 191, T2_CONTINUE = 192,
+    T2_BEGCALL = 190,
+    T2_BREAK = 191, T2_CONTINUE = 192, T2_REPEAT = 193, T2_UNTIL = 194,
     T2_254 = 254};
 
 /* ICodes */
@@ -193,7 +195,8 @@ enum {CF_3 = 3, CF_POP = 4,
     CF_EI = 149,
     CF_171 = 171, CF_INTERNALFUNCS = 174};
 
-enum { DO_PROC = 0, DO_LOOP = 1, DO_WHILE = 2, DO_CASE = 3, DO_FOR = 4 };
+
+enum { DO_PROC = 0, DO_LOOP = 1, DO_WHILE = 2, DO_CASE = 3, DO_FOR = 4, DO_REPEAT = 5 };
 
 /*
   значения используемых регистров в кодах CF
@@ -469,28 +472,28 @@ typedef struct {
 } file_t;
 
 typedef struct {
-    byte len;
-    byte type;
-    word sym;
-    word scope;
-    word ilink;
-    byte flag[3];
+    byte len;           // размер структуры
+    byte type;          // тип идентификатора (LIT_T, LABEL_T, etc.)
+    word sym;           // указательна на sym_t
+    word scope;         // область видимости (блок)
+    word ilink;         // адрес следующей структуры info_t
+    byte flag[3];       // флаги свойств, размерность и тд.
     byte extId;
     word dim;
     word baseoff;
     word parent;
-    byte dtype;
+    byte dtype;         // тип возвращаемого значения для PROC_T
     byte intno;
-    byte pcnt;
+    byte pcnt;          // количество параметров для PROC_T
     byte procId;
 } info_t;
 
 
-
 typedef struct {
-    offset_t link;
-    offset_t infoP;
-    byte name[1];
+    offset_t link;      // указатель на следующую структуру sym_t
+    offset_t infoP;     // для зарезервированных слов = 0xFF00 + токен T_XXXX
+                        // иначе адрес структуры info_t
+    byte name[1];       // первый байт имени идентификатора.
 } sym_t;
 
 typedef struct {
@@ -507,6 +510,9 @@ typedef struct {
     word byt;
 } loc_t;
 
+/*
+  структура для строки параметров
+*/
 typedef struct {
     offset_t link;
     byte pstr[1];
@@ -604,6 +610,10 @@ void FatalError_ov0(byte err);
 void FatalError_ov1(byte err);
 void FatalError_ov46(byte err);
 
+void SaveBlockPos();
+void RemoveBlockPos();
+void DoToRepeat();
+
 // the longjmp buffer
 extern jmp_buf exception;
 
@@ -679,7 +689,7 @@ extern byte tokenStr[];
 extern byte tokenType;
 extern word tokenVal;
 extern bool yyAgain;
-void CreateTxi1File();
+void CreateTx1File();
 void PopBlock();
 void PushBlock(word idAndLevel);
 void RewindTx1();
@@ -975,10 +985,10 @@ void copyTx2Code(byte arg1b,byte arg2b);
 byte Sub_5748(byte arg1b);
 word getIdnSize(offset_t arg1w);
 void cf_5795(word arg1w);
-void Sub_58F5(byte arg1b);
+void putBufTx1Error(byte arg1b);
 void Sub_597E();
 void Sub_5B96(byte arg1b,byte arg2b);
-void Sub_5C1D(byte arg1b);
+void Sub_5C1D(byte reg16);
 void Sub_5C97(byte idx);
 void cfPutPUSH(byte reg16);
 void Sub_5D6B(byte arg1b);
@@ -992,7 +1002,7 @@ void Sub_61E0(byte arg1b);
 void Sub_636A(byte arg1b);
 void cf_63AC(byte arg1b);
 void cfPutPOP(byte reg16);
-void Sub_652B();
+void fixT2Rec();
 void setTx2lastPos();
 void Tx2SyntaxError(byte arg1b);
 void WrFragData();
@@ -1014,7 +1024,7 @@ void cf_84ED();
 
 /* plm2f.plm */
 void Sub_87CB();
-void m2_doPROCEDURE();
+void m2p3_doPROCEDURE();
 
 /* plm2g.pl3 */
 void FindParamInfo(byte arg1b);
@@ -1034,8 +1044,8 @@ void cf_994D();
 
 /* plm2h.plm */
 void Sub_9BB0();
-void m2_doCALL();
-void m2_doCALLVAR();
+void m2p3_doCALL();
+void m2p3_doCALLVAR();
 void m2_doBEGMOVE();
 void m2_doCASE();
 void m2_doENDCASE();

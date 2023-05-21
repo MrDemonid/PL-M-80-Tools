@@ -439,6 +439,7 @@ static byte GetSourceCh()
                 else
                     FatalError(ERR215);
             }
+            crCnt = 0;
             CloseF(&srcFil);        /* unnest include file */
             srcFileIdx = srcFileIdx - 10;
             InitF(&srcFil, "SOURCE", (pointer)&srcFileTable[srcFileIdx]);
@@ -461,7 +462,8 @@ void GetSourceLine()
 
     while (1) {
         lstLine[lstLineLen] = GetSourceCh();
-        if (lstLine[lstLineLen] == '\n') {
+        if (lstLine[lstLineLen] == '\n')
+        {
             linePrefixChecked = false;
             linePrefixEmitted = false;
             return;
@@ -471,4 +473,3 @@ void GetSourceLine()
             lstLineLen++;
     }
 }
-

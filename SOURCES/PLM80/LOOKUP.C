@@ -25,6 +25,9 @@
 
 #include "plm.h"
 
+/*
+  вычисляет хэш имени идентификатора
+*/
 byte Hash(pointer pstr)
 {
     pointer p = pstr;
@@ -36,10 +39,13 @@ byte Hash(pointer pstr)
         len = len - 1;
     }
     return hash & 0x3F;
-} /* Hash() */
+}
 
 
 
+/*
+  добавляет в таблицу хэш-кодов новое имя
+*/
 void Lookup(pointer pstr)
 {
     offset_t p, q, r;
@@ -49,11 +55,24 @@ void Lookup(pointer pstr)
     hval = Hash(pstr);
     curSymbolP = WordP(hashChainsP)[hval];
     p = 0;
-    while (curSymbolP != 0) {
-        if (SymbolP(curSymbolP)->name[0] == pstr[0]) {
+    while (curSymbolP != 0)
+    {
+        /*
+          в таблице уже есть имя с таким же хэшем
+        */
+        if (SymbolP(curSymbolP)->name[0] == pstr[0])
+        {
             cmp = Strncmp(&SymbolP(curSymbolP)->name[1], pstr + 1, pstr[0]);
-            if (cmp == 0) {
-                if (p != 0 ) {
+            if (cmp == 0)
+            {
+                /*
+                  такое имя уже есть в таблице
+                */
+                if (p != 0 )
+                {
+                    /*
+                      перемещаем имя на первое место в таблице
+                    */
                     q = SymbolP(curSymbolP)->link;
                     r = curSymbolP;
                     curSymbolP = p;
@@ -68,6 +87,9 @@ void Lookup(pointer pstr)
         p = curSymbolP;
         curSymbolP = SymbolP(curSymbolP)->link;
     }
+    /*
+      создаём новую запись в таблице
+    */
     Alloc(0, pstr[0] + 1);
     curSymbolP = AllocSymbol(sizeof(sym_t) + pstr[0]);
     memmove(SymbolP(curSymbolP)->name, pstr, pstr[0] + 1);

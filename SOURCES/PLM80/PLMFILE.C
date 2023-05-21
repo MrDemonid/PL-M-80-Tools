@@ -130,8 +130,11 @@ void InitF(file_t *fileP, pointer sNam, pointer fNam)
     memset(fileP->fNam, ' ', 18);
     CpyTill(sNam, fileP->sNam, 6, ' ');
     CpyTill(fNam, fileP->fNam, 17, ' ');
+    fileP->bufP = NULL;
+    fileP->bsize = 0;
+    fileP->actual = 0;
+    fileP->curoff = 0;
 } /* InitF() */
-
 
 void OpenF(file_t *fileP, byte access)
 {

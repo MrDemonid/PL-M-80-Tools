@@ -267,12 +267,16 @@ void SetType(byte type)
     InfoP(curInfoP)->type = type;
 }
 
-// flag access functions
-
+/*
+  номер индекса в массиве flags[3]
+*/
 static byte tblOffsets[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-1, 1, 1, 1, 1, 1, 1, 1, 2, 2 };
+                             1, 1, 1, 1, 1, 1, 1, 1, 2, 2 };
+/*
+  и маска для выделения бита нужного флага в массиве flags[3]
+*/
 static byte tblBitFlags[] = { 0x80, 0x40, 0x20, 0x10, 0x10, 8, 8, 4, 2, 1,
-0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1, 0x80, 0x40 };
+                              0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1, 0x80, 0x40 };
 
 
 void ClrFlag(pointer base, byte flag)
