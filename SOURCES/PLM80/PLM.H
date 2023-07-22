@@ -68,6 +68,24 @@ enum {IOPEN = 0, ICLOSE = 1, IDELETE = 2, IREAD = 3, IWRITE = 4,
 #define QUOTE   '\''
 #define ISISEOF 0x81
 
+
+/*
+  количество функций в PLM80.LIB, используется в массиве helpersP
+*/
+#define NUM_INTERNAL_FUNCS 117
+
+/*
+  максимальная длина строки LITERALLY
+*/
+#define MAX_LIT_LENGTH 4096
+
+/*
+  максимальное количество элементов в структуре
+*/
+#define MAX_STRUC_ELEMS 256
+
+
+
 /* flags */
 enum {F_PUBLIC = 0, F_EXTERNAL = 1, F_BASED = 2, F_INITIAL = 3, F_REENTRANT = 4,
     F_DATA = 5, F_INTERRUPT = 6, F_AT = 7, F_ARRAY = 8, F_STARDIM = 9,
@@ -513,8 +531,8 @@ typedef struct {
 /*
   структура для строки параметров
 */
-typedef struct {
-    offset_t link;
+typedef struct tcmd_t {
+    struct tcmd_t *link;
     byte pstr[1];
 } cmd_t;
 
@@ -576,6 +594,12 @@ typedef struct {
     word stmt;
 } err_t;
 
+typedef struct {
+    byte type;            // = 255
+    word len;             // реальная длина строки
+    char *str;            // указатель на строку
+} reclit_t;
+
 
 #pragma pack(pop)
 // helper functions for converting offsets to pointers
@@ -588,7 +612,7 @@ offset_t ptr2Off(pointer addr);
 #define InfoP(off)   ((info_t *)off2Ptr(off))
 #define LitP(off)    ((lit_t *)off2Ptr(off))
 #define SymbolP(off) ((sym_t *)off2Ptr(off))
-#define CmdP(off)    ((cmd_t *)off2Ptr(off))
+// #define CmdP(off)    ((cmd_t *)off2Ptr(off))
 #define PstrP(off)   ((pstr_t *)off2Ptr(off))
 
 
@@ -599,6 +623,7 @@ offset_t ptr2Off(pointer addr);
 
 extern offset_t MEMORY;
 extern void initMem();       // used to create the info/symbol memory
+extern pointer AllocLiterally(word len);
 
 /* plm main */
 
@@ -687,6 +712,8 @@ extern byte stmtStartCode;
 extern byte tok2oprMap[];
 extern byte tokenStr[];
 extern byte tokenType;
+extern word tokenStrLen;
+extern word tokenMaxLen;
 extern word tokenVal;
 extern bool yyAgain;
 void CreateTx1File();
@@ -738,7 +765,7 @@ extern bool endSeen;
 void ParseProgram();
 
 /* plm0g.plm */
-offset_t CreateLit(pointer pstr);
+offset_t CreateLit(word len, pointer pstr);
 
 /* File(plm0h.plm) */
 
@@ -1347,18 +1374,18 @@ extern word blockDepth;
 extern offset_t botInfo;
 extern offset_t botMem;
 extern offset_t botSymbol;
-extern offset_t cmdLineP;
+extern cmd_t *cmdLineP;
 extern byte col;
 extern file_t conFile;
 extern byte controls[];
 extern word csegSize;
-extern word curInfoP;   // individually cast
+extern offset_t curInfoP;   // individually cast
 extern offset_t curSymbolP;
 extern byte DATE[];
 extern word dsegSize;
 extern byte fatalErrorCode;
 extern bool hasErrors;
-extern offset_t hashChainsP;
+extern offset_t hashChains[];
 extern bool haveModuleLevelUnit;
 extern offset_t helpersP;
 extern word intVecLoc;
@@ -1403,7 +1430,7 @@ extern word srcFileTable[];     /* 6 * (8 words fNam, blkNum, bytNum) */
 extern byte srcStemLen;
 extern byte srcStemName[];
 extern bool standAlone;
-extern offset_t startCmdLineP;
+extern cmd_t *startCmdLineP;
 extern byte TITLE[];
 extern byte TITLELEN;
 extern offset_t topInfo;
@@ -1507,7 +1534,7 @@ offset_t GetLinkOffset();
 word GetLinkVal();
 
 /* giparo.plm */
-word GetParentOffset();
+offset_t GetParentOffset();
 
 /* giparv.plm */
 word GetParentVal();
@@ -1627,7 +1654,7 @@ void SetLinkOffset(offset_t link);
 void SetLinkVal(word val);
 
 /* siparo.plm */
-void SetParentOffset(word parent);
+void SetParentOffset(offset_t parent);
 
 /* sipcnt.plm */
 void SetParamCnt(byte cnt);

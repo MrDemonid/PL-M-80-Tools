@@ -210,6 +210,11 @@ int main(int argc, char **argv)
     size_t len;
     char *s, *progname;
 
+    if (argc == 1)
+    {
+        showVersion(stdout, 0);
+        exit(0);
+    }
     if (argc == 2 && _stricmp(argv[1], "-v") == 0)
     {
         showVersion(stdout, argv[1][1] == 'V');

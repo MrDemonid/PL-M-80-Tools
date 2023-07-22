@@ -129,7 +129,7 @@ void InitF(file_t *fileP, pointer sNam, pointer fNam)
     memset(fileP->sNam, ' ', 6);
     memset(fileP->fNam, ' ', 18);
     CpyTill(sNam, fileP->sNam, 6, ' ');
-    CpyTill(fNam, fileP->fNam, 17, ' ');
+    CpyTill(fNam, fileP->fNam, 16, ' '); /* должно быть 16, а не 17, в оригинале была ошибка */
     fileP->bufP = NULL;
     fileP->bsize = 0;
     fileP->actual = 0;

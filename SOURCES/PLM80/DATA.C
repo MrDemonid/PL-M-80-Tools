@@ -37,7 +37,7 @@ word offFirstChM1;
 word LEFTMARGIN;
 word localLabelCnt;
 word srcFileIdx;
-offset_t hashChainsP; // offset is to pointer to array of offsets
+offset_t hashChains[64]; // offset is to pointer to array of offsets
 word blockDepth;
 offset_t localLabelsP;
 offset_t w381E;
@@ -51,7 +51,7 @@ word dsegSize = 0;
 word csegSize = 0;
 word objBlk;
 word objByte;
-word srcFileTable[60];
+word srcFileTable[66];
 file_t srcFil;
 file_t lstFil;
 file_t objFile;
@@ -83,8 +83,8 @@ byte controls[8];
 //byte pad_3C4E[2];
 byte srcStemName[12];
 bool debugSwitches[26];
-offset_t cmdLineP;
-offset_t startCmdLineP;
+cmd_t *cmdLineP;
+cmd_t *startCmdLineP;
 //byte overlay[7][FILE_NAME_LEN] = { ":F0:PLM80 .OV0 ", ":F0:PLM80 .OV1 ", ":F0:PLM80 .OV2 ", ":F0:PLM80 .OV3 ",
 //                                   ":F0:PLM80 .OV4 ", ":F0:PLM80 .OV5 ", ":F0:PLM80 .OV6 "};
 byte ixiFileName[FILE_NAME_LEN];

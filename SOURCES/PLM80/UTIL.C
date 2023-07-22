@@ -26,43 +26,71 @@
 #include "plm.h"
 #include <stdio.h>
 #include <stdlib.h>
-#define LOWMEM  0x613F      // plm lowest value of MEMORY
-#define HIGHMEM 0xf7ff
+//#define LOWMEM  0x613F      // plm lowest value of MEMORY
+//#define HIGHMEM 0xffff
 
 static pointer memory;
 offset_t MEMORY;
 
+/*
+  отдельная память под строки LITERALLY
+*/
+static pointer litBottom;     // блок памяти
+static pointer litTop;        // верхушка блока (последний байт блока)
+static pointer litFree;       // указатель на свободную область блока
+
+
 void initMem()
 {
-    if ((memory = (pointer)malloc(HIGHMEM - LOWMEM + 1)) == NULL) {
+    if ((memory = (pointer)malloc(65536)) == NULL) {
         fprintf(stderr, "can't allocate memory\n");
         exit(1);
     }
+    if ((litBottom = (pointer)malloc(65536)) == NULL) {
+        fprintf(stderr, "can't allocate memory\n");
+        exit(1);
+    }
+    litFree = litBottom;
+    litTop = litBottom + (65536-1);
 }
 
 offset_t MemCk()
 {
-    return HIGHMEM;
+    return 0xF7FF;
 }
 
 offset_t ptr2Off(pointer p)
 {
     if (p == 0)     // allow NULL
         return 0;
-    if (p < memory || memory + HIGHMEM < p) {
+    if (p < memory || p >= memory+0xF7FF)
+    {
         fprintf(stderr, "out of range memory ref %p\n", p);
         exit(1);
     }
-    return (offset_t)(p - memory + LOWMEM);
+    return (offset_t)(p - memory);
 }
 
 pointer off2Ptr(offset_t off)
 {
     if (off == 0)       // allow NULL
         return 0;
-    if (off < LOWMEM || HIGHMEM < off) {
-        fprintf(stderr, "out of range offset %04X\n", off);
-        exit(1);
-    }
-    return memory + off - LOWMEM;
+    return (memory + off);
 }
+
+
+/*
+  выделение памяти в области строк LITERALLY
+*/
+pointer AllocLiterally(word len)
+{
+    pointer ptr;
+
+    if ((litFree + len) >= litTop)
+        FatalError(ERR83);
+    ptr = litFree;
+    litFree += len;
+    return ptr;
+}
+
+

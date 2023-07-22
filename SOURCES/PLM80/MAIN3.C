@@ -135,7 +135,10 @@ static void Sub_4105()
 
 
 
-static void Sub_4201()
+/*
+  подгрузка символьных имён из файла
+*/
+static void LoadNMS()
 {
     byte i;
 
@@ -147,8 +150,11 @@ static void Sub_4201()
         Fread(&nmsFile, &SymbolP(curSymbolP)->name[1], i);
         Fread(&nmsFile, &i, 1);
     }
+    /*
+      корректируем нижнюю границу памяти
+    */
     botSymbol = curSymbolP + 4;
-    botMem = botSymbol;
+    // botMem = botSymbol;
 }
 
 
@@ -323,7 +329,7 @@ word Start3()
         Sub_40B6();
         Sub_4105();
         csegSize = w7197;
-        Sub_4201();
+        LoadNMS();
         #ifdef _DEBUG
             symMode = 2;    // now info points to pstr symbols
         #endif

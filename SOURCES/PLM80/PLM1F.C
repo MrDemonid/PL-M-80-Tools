@@ -99,11 +99,15 @@ static void SaveNMSfile()
         return;
     p = topSymbol - 1;
     for (i = 0; i <= 63; i++) {
-        curSymbolP = WordP(hashChainsP)[i];
+        curSymbolP = hashChains[i];
         while (curSymbolP != 0) {
             if ((curInfoP = SymbolP(curSymbolP)->infoP) != 0 && High(curInfoP) != 0xff)
             {
                 p = p - SymbolP(curSymbolP)->name[0] - 1;
+                /*
+                  надобность в структурах sym_t отпала, поэтому
+                  пересчитываем адреса под массив паскаль-строк
+                */
                 while (curInfoP != 0) {
                     SetSymbol(p);
                     curInfoP = GetLinkOffset();
@@ -358,7 +362,13 @@ static void Sub_75F7()
     botInfo = botMem + topMem - topInfo;
     topInfo = topMem;
     RevMemMov(ByteP(botMem), ByteP(botInfo), topInfo - botInfo + 1);
-    helpersP = botInfo - 117 * 2;
+    /*
+      выделяем память под таблицу использования функций из PLM80.LIB
+    */
+    helpersP = botInfo - NUM_INTERNAL_FUNCS * 2;
+    /*
+      выделяем память под метки
+    */
     localLabelsP = helpersP - (localLabelCnt + 1) * 2;
     w381E = localLabelsP - (localLabelCnt + 1);
     w3822 = botInfo - 2;

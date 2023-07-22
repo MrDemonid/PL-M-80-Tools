@@ -34,8 +34,8 @@ static void FinishLexPass()
     WriteLineInfo();
     WrByte(L_EOF);
     RewindTx1();
-    TellF(&srcFil, (loc_t *)&srcFileTable[srcFileIdx + 8]);
-    Backup((loc_t *)&srcFileTable[srcFileIdx + 8], offLastCh - offCurCh);
+    TellF(&srcFil, (loc_t *)&srcFileTable[srcFileIdx + 9]);
+    Backup((loc_t *)&srcFileTable[srcFileIdx + 9], offLastCh - offCurCh);
     CloseF(&srcFil);
 } /* FinishLexPass() */
 
@@ -44,13 +44,13 @@ static void ParseCommandLine()
 {
     InitF(&srcFil, "SOURCE", (pointer)&srcFileTable[srcFileIdx]);
     OpenF(&srcFil, 1);
-    SeekF(&srcFil,  (loc_t *)&srcFileTable[srcFileIdx + 8]);
+    SeekF(&srcFil,  (loc_t *)&srcFileTable[srcFileIdx + 9]);
     offCurCh = offLastCh;
     if (offFirstChM1 != 0)
-        while (cmdLineP != 0) {
-            ParseControlLine(offFirstChM1 + ByteP(cmdLineP));   // ParseControlLine will move to first char
+        while (cmdLineP != NULL) {
+            ParseControlLine((pointer) cmdLineP + offFirstChM1);   // ParseControlLine will move to first char
             offFirstChM1 = 2;   // offset to first char - 1
-            cmdLineP = CmdP(cmdLineP)->link;                    // continuation line
+            cmdLineP = cmdLineP->link;                    // continuation line
         }
     offFirstChM1 = 0;       // 0 if no more cmd line
     curScopeP = (wpointer)curScope;

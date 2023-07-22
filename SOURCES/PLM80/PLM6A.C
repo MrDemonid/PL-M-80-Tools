@@ -89,9 +89,9 @@ void MiscControl() // was also in plm4a.c
             break;
     case T2_INCLUDE:
             EmitLinePrefix();
-            TellF(&srcFil, (loc_t *)&srcFileTable[srcFileIdx + 8]);
-            Backup((loc_t *)&srcFileTable[srcFileIdx + 8], offLastCh - offCurCh);
-            srcFileIdx = srcFileIdx + 10;
+            TellF(&srcFil, (loc_t *)&srcFileTable[srcFileIdx + 9]);
+            Backup((loc_t *)&srcFileTable[srcFileIdx + 9], offLastCh - offCurCh);
+            srcFileIdx = srcFileIdx + 11;
             Fread(&tx2File, &name[13], 6);      /* Read() in name of include file */
             Fread(&tx2File, &name[6], 7);
             Fread(&tx2File, &name[0], 7);       /* overwrites the type byte */

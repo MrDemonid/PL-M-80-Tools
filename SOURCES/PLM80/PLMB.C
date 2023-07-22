@@ -29,7 +29,7 @@
 #pragma off(unreferenced)
 static byte vtext[] = "program_version_number=";
 #pragma on(unreferenced)
-byte verNo[] = "V5.0";
+byte verNo[] = "V5.1";
 
 // plmf.c
 // the builtins each entry is
@@ -149,27 +149,26 @@ static void InitInfoAndSym()
 {
     word i;
 
+    /*
     if (ov0Boundary > ov1Boundary)  // plm check to make sure overlays don't overwrite
         botMem = ov0Boundary;
     else
         botMem = ov1Boundary;
     botMem = botMem + 256;          // reserve space
-    /*
-      выделяем память под хэш-таблицу (64 указателя)
     */
-    hashChainsP = (topMem + 1 - 64 * sizeof(offset_t)); // allocate hashChains table
+    botMem = 0x1000;                // оставляем 4 Кб на всякий пожарный
     /*
       выделяем память под имена идентификаторов, включая встроенные
       функции и зарезервированные слова; имена хранятся в виде
       байта длины и собственно имени.
     */
-    topSymbol = hashChainsP - 1;
+    topSymbol = topMem-1;
     botSymbol = topSymbol + 1;
 
     botInfo = botMem;
     topInfo = botInfo + 1;
     for (i = 0; i <= 63; i++)       // initialise the hashCHains
-        WordP(hashChainsP)[i] = 0;
+        hashChains[i] = 0;
     SetPageNo(1);
     localLabelCnt = 0;
     cmdLineCaptured++;

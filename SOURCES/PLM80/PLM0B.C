@@ -649,12 +649,12 @@ static void OptInclude()
             else
                 FatalError(ERR98);  /* INCLUDE FILE IS not A DISKETTE FILE */
     }
-    if (srcFileIdx >= 50)
+    if (srcFileIdx >= 55)
         SyntaxError(ERR13); /* LIMIT EXCEEDED: INCLUDE NESTING */
     else {
-        TellF(&srcFil, (loc_t *)&srcFileTable[srcFileIdx + 8]);
-        Backup((loc_t *)&srcFileTable[srcFileIdx + 8], offLastCh - offCurCh);
-        srcFileIdx = srcFileIdx + 10;
+        TellF(&srcFil, (loc_t *)&srcFileTable[srcFileIdx + 9]);
+        Backup((loc_t *)&srcFileTable[srcFileIdx + 9], offLastCh - offCurCh);
+        srcFileIdx = srcFileIdx + 11;
         memmove(&srcFileTable[srcFileIdx], optStrValP, tknLen);
         CloseF(&srcFil);
         InitF(&srcFil, "SOURCE", optStrValP);
@@ -1153,17 +1153,17 @@ static void GetCodeLine()
                 isNonCtrlLine = true;       // first none control line (even a comment) stops primary controls
                 return;                     // we have a line
             }
-        } else if (srcFileIdx < 10) {       // EOF at end of main file
+        } else if (srcFileIdx < 11) {       // EOF at end of main file
             if (ifDepth != 0)               // oops we are nested (error code seems to be incorrect)
                 SyntaxError(ERR188);        /* MISPLACED RESTORE OPTION */
             inChrP = "/*'/**/EOF   ";       // string to make sure any comments, strings are closed and EOF
             return;
         } else {
             CloseF(&srcFil);                // close nested file & reload caller file at saved position
-            srcFileIdx = srcFileIdx - 10;
+            srcFileIdx = srcFileIdx - 11;
             InitF(&srcFil, "SOURCE", (pointer)&srcFileTable[srcFileIdx]);
             OpenF(&srcFil, 1);
-            SeekF(&srcFil, (loc_t *)&srcFileTable[srcFileIdx + 8]);
+            SeekF(&srcFil, (loc_t *)&srcFileTable[srcFileIdx + 9]);
             offCurCh = offLastCh;           // force buffer reload
         }
     }

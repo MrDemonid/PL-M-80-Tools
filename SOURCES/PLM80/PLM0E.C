@@ -114,11 +114,13 @@ static void Token2Num()
     }
 } /* Token2Num() */
 
+
 static void NestMacro()
 {
-    pointer tmp;
+    reclit_t *lit;
 
-    tmp = off2Ptr(GetLitAddr() + 2);
+    lit = (reclit_t *) off2Ptr(GetLitAddr());
+
     WrXrefUse();
     if (macroDepth == 10)
         TokenErrorAt(ERR7); /* LIMIT EXCEEDED: MACROS NESTED TOO DEEPLY */
@@ -126,10 +128,12 @@ static void NestMacro()
         SetType(MACRO_T);   // mark the type as  MACRO_T to spot recursive expansion
         macroPtrs[macroDepth = macroDepth + 2] = inChrP;    // push the current location
         macroPtrs[macroDepth + 1] = off2Ptr(curMacroInfoP); // and infoP
-        inChrP = tmp - 1;               // adjust for initial increment in GNxtCh()
+        inChrP = lit->str;
+        inChrP += 1;
         curMacroInfoP = curInfoP;       // set up the new infoP
     }
 } /* NestMacro() */
+
 
 static bool IsNotLit()
 {
@@ -183,6 +187,7 @@ static void ParseString()
     bool tooLong = false;
     word curOff = 1;
 
+    tokenStrLen = 0;
     // code simplified in port to C
     while (1) {
         GNxtCh();
@@ -193,9 +198,11 @@ static void ParseString()
             if (nextCh != QUOTE)    // single quote finishes string
                 break;
         }
-        if (curOff != 256)
+        if (curOff != tokenMaxLen)
+        {
             tokenStr[curOff++] = nextCh;
-        else {
+            tokenStrLen++;
+        } else {
             tooLong = true;
             if (nextCh == ';') {
                 TokenErrorAt(ERR85);    /* LONG STRING ASSUMED CLOSED AT NEXT SEMICOLON OR QUOTE */
@@ -444,9 +451,9 @@ static byte dclFlags[3];
 static byte dclType;
 static offset_t lastLit;
 static word arrayDim;
-static offset_t structMembers[33];
-static word structMemDim[33];
-static byte structMemType[33];
+static offset_t structMembers[MAX_STRUC_ELEMS+1];
+static word structMemDim[MAX_STRUC_ELEMS+1];
+static byte structMemType[MAX_STRUC_ELEMS+1];
 static word structMCnt;
 static byte factoredParamCnt;
 static bool isNewVar;
@@ -711,7 +718,7 @@ static void ParseStructMemElement()
             if (curSymbolP == structMembers[mcnt])
                 TokenErrorAt(ERR67);    /* DUPLICATE STRUCTURE MEMBER NAME */
         }
-        if (structMCnt == 32)
+        if (structMCnt == MAX_STRUC_ELEMS)
             TokenErrorAt(ERR68);    /* LIMIT EXCEEDED: NUMBER OF STRUCTURE MEMBERS */
         else
             structMCnt++;
@@ -803,14 +810,17 @@ static void ParseDeclType()
 */
 static void ParseLiterally()
 {
+    tokenMaxLen = MAX_LIT_LENGTH;
     if (YylexNotMatch(T_STRING)) {
         TokenErrorAt(ERR56);    /* INVALID MACRO TEXT, NOT A STRING CONSTANT */
         tokenStr[0] = 1;        // give default of a single space
         tokenStr[1] = ' ';
     }
-    lastLit = CreateLit(tokenStr);
+    tokenMaxLen = 256;
+    lastLit = CreateLit(tokenStrLen, tokenStr);
     dclType = LIT_T;
 }
+
 
 
 static void ParseLitOrType()

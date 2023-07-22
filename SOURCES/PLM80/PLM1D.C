@@ -315,6 +315,9 @@ void ExprParse14()
 }
 
 
+/*
+  разбираем параметры через запятую, пока не встретим закрывающую скобку
+*/
 void ExprParse15()
 {
     operatorStack[operatorSP] = operatorStack[operatorSP] + 1;

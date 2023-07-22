@@ -60,10 +60,10 @@ static void Sub_3FC8()
         {
             Xputstr2cLst("COMPILER INVOKED BY:  ", 0);
             cmdLineP = startCmdLineP;
-            while (cmdLineP != 0) {
+            while (cmdLineP != NULL) {
                 TabLst(-23);
-                Xputstr2cLst(&CmdP(cmdLineP)->pstr[1], '\r');
-                cmdLineP = CmdP(cmdLineP)->link;
+                Xputstr2cLst(&cmdLineP->pstr[1], '\r');
+                cmdLineP = cmdLineP->link;
             }
             NewLineLst();
         }
@@ -78,9 +78,11 @@ void Sub_408B()
     }
 
     Sub_3FC8();
+    /*
     MEMORY = 0xA30A;
     if (MEMORY + 256 > botMem)
         Fatal("COMPILER ERROR: INSUFFICIENT MEMORY FOR FINAL ASSEMBLY", 54);
+    */
     stmtNo = 0;
     if (PRINT) {
         srcFileIdx = 0;
@@ -159,8 +161,8 @@ void Sub_423C()
     }
 
     if (PRINT) {
-        TellF(&srcFil, (loc_t *)&srcFileTable[srcFileIdx + 8]);
-        Backup((loc_t *)&srcFileTable[srcFileIdx + 8], offLastCh - offCurCh);
+        TellF(&srcFil, (loc_t *)&srcFileTable[srcFileIdx + 9]);
+        Backup((loc_t *)&srcFileTable[srcFileIdx + 9], offLastCh - offCurCh);
         CloseF(&srcFil);
         FlushLstBuf();
     }

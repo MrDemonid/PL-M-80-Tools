@@ -44,10 +44,10 @@ void Sub_3F96()
         NewLineLst();
         Xputstr2cLst("COMPILER INVOKED by:  ", 0);
         cmdLineP = startCmdLineP;
-        while (cmdLineP != 0) {
+        while (cmdLineP != NULL) {
             TabLst(-23);
-            Xputstr2cLst(&CmdP(cmdLineP)->pstr[1], '\r');
-            cmdLineP = CmdP(cmdLineP)->link;
+            Xputstr2cLst(&cmdLineP->pstr[1], '\r');
+            cmdLineP = cmdLineP->link;
         }
         NewLineLst();
         SetSkipLst(3);
@@ -112,7 +112,7 @@ void Sub_4149()     // similar to Sub_4201 in main3.c
         Fread(&nmsFile, &b7ADA, 1);
     }
     botSymbol = curSymbolP + 4;
-    botMem = botSymbol;
+    // botMem = botSymbol;
 }
 
 
@@ -137,8 +137,8 @@ void Sub_41B6()
     }
     linesRead = lineCnt;
     if (PRINT) {
-        TellF(&srcFil, (loc_t *)&srcFileTable[srcFileIdx + 8]);
-        Backup((loc_t *)&srcFileTable[srcFileIdx + 8], offLastCh - offCurCh);
+        TellF(&srcFil, (loc_t *)&srcFileTable[srcFileIdx + 9]);
+        Backup((loc_t *)&srcFileTable[srcFileIdx + 9], offLastCh - offCurCh);
         CloseF(&srcFil);
         FlushLstBuf();
     }

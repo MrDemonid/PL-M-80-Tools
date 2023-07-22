@@ -50,9 +50,9 @@ static void SkipSpace()
     while (*cmdTextP == ' ' || *cmdTextP == '&') {
         if (*cmdTextP == ' ')
             cmdTextP++;
-        else if (CmdP(cmdLineP)->link) {
-            cmdLineP = CmdP(cmdLineP)->link;
-            cmdTextP = &CmdP(cmdLineP)->pstr[1];
+        else if (cmdLineP->link) {
+            cmdLineP = cmdLineP->link;
+            cmdTextP = &cmdLineP->pstr[1];
         }
     }
 } /* SkipSpace() */
@@ -90,25 +90,29 @@ static void GetCmdLine()
     word actual, status;
     byte i;
     bool inQuote;
+    cmd_t *ptr;
 
     Rescan(1, &status);     // no need for LocalRescan
     if (status != 0)
         FatlIO(&conFile, status);
-    startCmdLineP = 0;
-    cmdLineP = topMem;
+    startCmdLineP = NULL;
+    cmdLineP = NULL;
 
     for (;;) {
         ReadF(&conFile, ioBuffer, 128, &actual);
         if (ioBuffer[actual - 1] != '\n' || ioBuffer[actual - 2] != '\r')
             Fatal(aInvocationComm, Length(aInvocationComm));
-        topMem = cmdLineP - (sizeof(cmd_t) + actual);
-        if (startCmdLineP == 0)
-            startCmdLineP = topMem;
+
+        ptr = malloc(actual + 2 + sizeof(cmd_t));
+        if (startCmdLineP == NULL)
+            startCmdLineP = ptr;
         else
-            CmdP(cmdLineP)->link = topMem;
-        cmdLineP = topMem;
-        CmdP(cmdLineP)->pstr[0] = (byte)actual;
-        memmove(&CmdP(cmdLineP)->pstr[1], ioBuffer, actual);
+            cmdLineP->link = ptr;
+
+        cmdLineP = ptr;
+        cmdLineP->pstr[0] = (byte)actual;
+        memmove(&cmdLineP->pstr[1], ioBuffer, actual);
+
         inQuote = false;
         for (i = 0; i < actual; i++) {
             if (ioBuffer[i] == QUOTE)
@@ -117,9 +121,8 @@ static void GetCmdLine()
                 if (! inQuote)
                     goto extend;
         }
-        CmdP(cmdLineP)->link = 0;
+        cmdLineP->link = NULL;
         cmdLineP = startCmdLineP;
-        topMem = topMem - 1;
         return;
     extend:
         PrintStr("**", 2);
@@ -242,7 +245,7 @@ static void ParseSrcFileName()
     if (*cmdTextP == '\r')
         offFirstChM1 = 0;
     else
-        offFirstChM1 = (word)(cmdTextP - ByteP(cmdLineP) - 1);
+        offFirstChM1 = ((word)(cmdTextP - (pointer) cmdLineP)) - 1;
 } /* ParseSrcFileName() */
 
 static void InitFilesAndDefaults()
@@ -312,7 +315,7 @@ void SignOnAndGetSourceName()
     PrintStr(signonMsg, Length(signonMsg));
     PrintStr(szVersion, 4);
     PrintStr("\r\n", 2);
-    cmdTextP = &CmdP(cmdLineP)->pstr[1];
+    cmdTextP = &cmdLineP->pstr[1];
     blkSize1 = topMem - blkSize1 - 256;
     blkSize2 = topMem - blkSize2 - 256;
     ParseInvokeName();

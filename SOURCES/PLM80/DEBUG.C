@@ -78,6 +78,7 @@ void showInfo(offset_t off, FILE *fp)
     sym_t *sym;
     lit_t *lit;
     pstr_t *ps;
+    reclit_t *litstr;
 
     info = InfoP(off);
     fprintf(fp,"len = %d", info->len);
@@ -105,16 +106,19 @@ void showInfo(offset_t off, FILE *fp)
     }
     fprintf(fp,", scope = %04X", info->scope);
     fprintf(fp,", ilink = %04X", info->ilink);
-    switch (info->type) {
-    case LIT_T:
-        lit = LitP(off);
-        if (symMode == 0)
-            fprintf(fp,", lit = %04X", lit->litAddr);
-        else {
-            ps = PstrP(lit->litAddr + 1);
-            fprintf(fp,", lit = %.*s", ps->len, ps->str);
-        }
-        break;
+    switch (info->type)
+    {
+        case LIT_T:
+            lit = LitP(off);
+            if (symMode == 0)
+            {
+                fprintf(fp,", lit = %04X", lit->litAddr);
+
+            } else {
+                litstr = (reclit_t *) off2Ptr(lit->litAddr);
+                fprintf(fp, ", lit = '%.*s'", litstr->len, litstr->str+2);
+            }
+            break;
     case LABEL_T: case BYTE_T: case ADDRESS_T: case STRUCT_T:
     case PROC_T:
         fprintf(fp,", flags =  %02X %02X %02X", info->flag[0], info->flag[1], info->flag[2]);
@@ -218,13 +222,13 @@ char *tx2NameTable[] = {
     "T2_175", "T2_176", "T2_177", "T2_178", "T2_179",
     "T2_180", "T2_STACKPTR", "T2_SEMICOLON", "T2_OPTBACKREF", "T2_CASE",
     "T2_ENDCASE", "T2_ENDPROC", "T2_LENGTH", "T2_LAST", "T2_SIZE",
-    "T2_BEGCALL", "T2_BREAK", "T2_CONTINUE"
+    "T2_BEGCALL", "T2_BREAK", "T2_CONTINUE", "T2_REPEAT", "T2_UNTIL",
 };
 
 
 char *tx2Name(byte op)
 {
-    if (op > T2_CONTINUE) {
+    if (op > T2_UNTIL) {
         fprintf(stderr, "tx2 op %d out of range\n", op);
         Exit();
     }
@@ -247,7 +251,8 @@ char *lexItems[] = {
     "L_NOT", "L_LT", "L_LE", "L_EQ", "L_NE",
     "L_GE", "L_GT", "L_COMMA", "L_LPAREN", "L_RPAREN",
     "L_PERIOD", "L_TO", "L_BY", "L_INVALID", "L_MODULE",
-    "L_XREFUSE", "L_XREFDEF", "L_EXTERNAL", "L_BREAK", "L_CONTINUE"
+    "L_XREFUSE", "L_XREFDEF", "L_EXTERNAL",
+    "L_BREAK", "L_CONTINUE", "L_REPEAT", "L_UNTIL" };
 };
 
 
@@ -281,7 +286,7 @@ void DumpLexStream() // to be used after Start1
         return;
     }
     while ((c = getc(fp)) != EOF) {
-        if (c > L_CONTINUE)
+        if (c > L_UNTIL)
             fprintf(fpout, "Invalid lex item %d\n", c);
         else {
             fprintf(fpout, "%s", lexItems[c]);

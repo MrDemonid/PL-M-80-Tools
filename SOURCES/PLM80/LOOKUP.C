@@ -53,7 +53,7 @@ void Lookup(pointer pstr)
     byte cmp;
 
     hval = Hash(pstr);
-    curSymbolP = WordP(hashChainsP)[hval];
+    curSymbolP = hashChains[hval & 0x3F];
     p = 0;
     while (curSymbolP != 0)
     {
@@ -78,8 +78,8 @@ void Lookup(pointer pstr)
                     curSymbolP = p;
                     SymbolP(curSymbolP)->link = q;
                     curSymbolP = r;
-                    SymbolP(curSymbolP)->link = WordP(hashChainsP)[hval];
-                    WordP(hashChainsP)[hval] = curSymbolP;
+                    SymbolP(curSymbolP)->link = hashChains[hval];
+                    hashChains[hval] = curSymbolP;
                 }
                 return;
             }
@@ -94,6 +94,6 @@ void Lookup(pointer pstr)
     curSymbolP = AllocSymbol(sizeof(sym_t) + pstr[0]);
     memmove(SymbolP(curSymbolP)->name, pstr, pstr[0] + 1);
     SymbolP(curSymbolP)->infoP = 0;
-    SymbolP(curSymbolP)->link = WordP(hashChainsP)[hval];
-    WordP(hashChainsP)[hval] = curSymbolP;
+    SymbolP(curSymbolP)->link = hashChains[hval];
+    hashChains[hval] = curSymbolP;
 } /* Lookup() */

@@ -287,8 +287,8 @@ void EmitLinePrefix()
         if (srcFileIdx != 0) {
             TabLst(-11);
             XwrnstrLst("=", 1);
-            if (srcFileIdx != 10)
-                XnumLst(srcFileIdx / 10 - 1, 1, 10);
+            if (srcFileIdx != 11)
+                XnumLst(srcFileIdx / 11 - 1, 1, 10);
         }
         if (lstLineLen > 0) {
             TabLst(-15);
@@ -441,10 +441,10 @@ static byte GetSourceCh()
             }
             crCnt = 0;
             CloseF(&srcFil);        /* unnest include file */
-            srcFileIdx = srcFileIdx - 10;
+            srcFileIdx = srcFileIdx - 11;
             InitF(&srcFil, "SOURCE", (pointer)&srcFileTable[srcFileIdx]);
             OpenF(&srcFil, 1);
-            SeekF(&srcFil, (loc_t *)&srcFileTable[srcFileIdx + 8]);
+            SeekF(&srcFil, (loc_t *)&srcFileTable[srcFileIdx + 9]);
         }
         offLastCh = offLastCh - 1;      /* correct for 0 index */
     } else

@@ -25,17 +25,22 @@
 
 #include "plm.h"
 
-offset_t CreateLit(pointer pstr)
+offset_t CreateLit(word len, pointer pstr)
 {
-    word litLen;
     offset_t litSymbol;
+    reclit_t *lit;
+    char *mem;
 
-    litLen = pstr[0] + 1;
-    litSymbol = AllocSymbol(litLen + 3);
-    memmove(ByteP(litSymbol + 1), pstr, litLen);
-    memmove(ByteP(litSymbol + litLen + 1), " \n", 2);
-    ByteP(litSymbol)[0] = 255;      /* put max size \n will terminate */
+    mem = AllocLiterally(len+1+3);
+
+    litSymbol = AllocSymbol(10);
+    lit = (reclit_t *) off2Ptr(litSymbol);
+    lit->type = 0xFF;
+    lit->len = len;
+    lit->str = mem;
+
+    memmove(mem, &len, 2);
+    memmove(mem+2, &pstr[1], len);
+    memmove(mem+len+2, " \n", 2);
     return litSymbol;
 }
-
-

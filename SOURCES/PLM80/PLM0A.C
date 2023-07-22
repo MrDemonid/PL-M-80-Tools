@@ -98,7 +98,9 @@ offset_t markedSymbolP = 0;
 byte  lineBuf[128];
 byte  inbuf[1280];
 byte  tokenType;
-byte  tokenStr[256];
+byte  tokenStr[MAX_LIT_LENGTH+2];
+word  tokenStrLen;        // реальная длина считанной строки
+word  tokenMaxLen = 256;  // разрешенная длина для считываемой строки
 byte  nextCh;
 byte  stmtStartCode;
 byte  stmtStartToken;
