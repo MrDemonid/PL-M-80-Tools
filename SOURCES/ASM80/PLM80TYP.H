@@ -28,6 +28,12 @@
 #pragma pack(push, 1)
 typedef unsigned char byte;
 typedef unsigned short word;
+typedef unsigned long dword;
+
+
+// defined in globlm.c
+#define IN_BUF_SIZE     1024
+#define OUT_BUF_SIZE    512
 
 
 #define MAX_TOKENS_IDX 16       // глубина стека идентификаторов (например при парсинге db x,x,x,x,x)
@@ -121,8 +127,13 @@ typedef struct {
 
 typedef struct {
     byte name[17];
-    word blk, byt;
-    byte b19;
+    dword offs;                 // текущая позиция в файле
+    byte buff[IN_BUF_SIZE];     // копия буфера исходника
+    byte *pEndBuf;              // конец данных в буфере
+    byte *pStartLine;           // начало разбираемой строки в буфере
+    byte *pCurCh;               // текущая позиция в буфере
+    word nReaded;               // количество последних считанных символов в буфер
+    word lineCnt;               // количество обработанных символов в строке
 } file_t;
 
 typedef struct {

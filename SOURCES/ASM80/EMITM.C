@@ -334,9 +334,9 @@ void Ovl8()
 void Ovl11()
 {
     if (externId != 0) {
-        Seek(objfd, SEEKABS, &azero, &azero, &statusIO);    /* rewind */
+        Seek(objfd, SEEKABS, &azero, &statusIO);    /* rewind */
         WriteModhdr();
-        Seek(objfd, SEEKEND, &azero, &azero, &statusIO);    /* back to end */
+        Seek(objfd, SEEKEND, &azero, &statusIO);    /* back to end */
     }
     rPublics.type = OMF_PUBLICS;          /* public declarations record */
     rPublics.len = 1;

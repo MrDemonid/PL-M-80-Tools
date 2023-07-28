@@ -25,9 +25,6 @@
 
 #include "asm80.h"
 
-#define IN_BUF_SIZE     512
-#define OUT_BUF_SIZE    512
-
 byte macroLine[129];
 byte *macroP = macroLine;
 bool inQuotes = false;
@@ -175,7 +172,7 @@ bool showAddr;
 bool lineNumberEmitted = false;
 bool b68AE = false;
 byte tokStr[36] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-word sizeInBuf = {IN_BUF_SIZE};
+word sizeInBuf = {IN_BUF_SIZE/2};
 byte inBuf[IN_BUF_SIZE];
 byte outbuf[OUT_BUF_SIZE+1];
 
@@ -237,7 +234,7 @@ byte cmdLineBuf[129];
 address actRead;
 word errCnt;
 byte *w6BCE;
-word azero = 0;
+dword azero = 0;
 byte *cmdchP = cmdLineBuf;
 byte *controlsP;
 bool skipRuntimeError = false;

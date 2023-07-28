@@ -39,8 +39,7 @@ byte *inChP = inBuf - 1;
 byte *startLineP = inBuf;
 byte lineChCnt = 0;
 file_t files[6];
-static word seekIBlk;
-static word seekIByte;
+static dword seekOffs;
 #pragma off(unreferenced)
 static byte pad6CAD;
 #pragma on(unreferenced)
@@ -63,16 +62,64 @@ void ReadF(byte conn, byte *buffP, word count)
 
 void SeekI(byte seekOp)
 {
-    Seek(srcfd, seekOp, &seekIBlk, &seekIByte, &statusIO);
+    Seek(srcfd, seekOp, &seekOffs, &statusIO);
     IoErrChk();
 }
 
 
+/*
+  подгрузка текста в буфер, с корректировкой строк до PC-формата.
+*/
 void ReadSrc(byte *bufLoc)
 {
- //   byte pad;
+    byte buff[IN_BUF_SIZE];
+    int size;
+    char *src;
+    char *dst;
+    static bool expected_LF = false;
 
-    ReadF((byte)srcfd, bufLoc, (word)(&inBuf[sizeInBuf] - bufLoc));
+    ReadF((byte)srcfd, buff, (word)(&inBuf[sizeInBuf] - bufLoc));
+    size = readFActual;
+    src = &buff;
+    dst = bufLoc;
+
+    while (size)
+    {
+        switch (*src)
+        {
+            case CR:
+                if (expected_LF)
+                {
+                    // второй подряд CR (0x0D), вставляем LF (0x0A) после первого
+                    *dst++ = LF;
+                    readFActual++;
+                }
+                expected_LF = true;
+                break;
+
+            case LF:
+                if (!expected_LF)
+                {
+                    // коенц строки формата UNIX, преобразуем в PC-формат
+                    *dst++ = CR;
+                    readFActual++;
+                }
+                expected_LF = false;
+                break;
+
+            default:
+                if (expected_LF)
+                {
+                    // редкий вид строк без LF (0x0A)
+                    *dst++ = LF;
+                    readFActual++;
+                    expected_LF = false;
+                }
+                break;
+        }
+        *dst++ = *src++;
+        size--;
+    }
     endInBufP = bufLoc + readFActual;
 }
 
@@ -94,11 +141,17 @@ void CloseSrc() /* close current source file. Revert to any parent file */
     else
         srcfd = SafeOpen(files[fileIdx].name, READ_MODE);
 
-    seekIByte = files[fileIdx].byt;    /* move to saved location */
-    seekIBlk = files[fileIdx].blk;
+    /*
+      восстанавливаем входной буфер и позицию в файле
+    */
+    seekOffs = files[fileIdx].offs;
     SeekI(SEEKABS);
-    endInBufP = inBuf;        /* force Read() */
-    inChP = inBuf - 1;
+    memcpy(inBuf, files[fileIdx].buff, IN_BUF_SIZE);
+    endInBufP   = files[fileIdx].pEndBuf;
+    startLineP  = files[fileIdx].pStartLine;
+    inChP       = files[fileIdx].pCurCh;
+    readFActual = files[fileIdx].nReaded;
+    lineChCnt   = files[fileIdx].lineCnt;
 }
 
 
@@ -141,35 +194,30 @@ byte GetSrcCh() /* get next source character */
 
 void OpenSrc()
 {
-    byte curByteLoc;
-    word curBlkLoc;
-
     pendingInclude = false;
     SeekI(SEEKTELL);
-    if (seekIByte == 128) {        /* adjust for 128 boundary */
-        seekIBlk++;
-        seekIByte = 0;
-    }
-
-    curBlkLoc = (word)(endInBufP - startLineP);    /* un-used characters */
-//x:                        /* forces code alignment */
-    if ((curByteLoc = curBlkLoc % 128) > seekIByte) {
-        seekIByte += 128;           /* adjust to allow for un-used chars */
-        seekIBlk--;
-    }
-    /* save the current file location */
-    files[fileIdx - 1].byt = seekIByte - curByteLoc;
-    files[fileIdx - 1].blk = seekIBlk - curBlkLoc / 128;
+    /*
+      сохраняем текущий буфер и позицию в файле
+    */
+    files[fileIdx - 1].offs = seekOffs;
+    memcpy(files[fileIdx - 1].buff, inBuf, IN_BUF_SIZE);
+    files[fileIdx - 1].pEndBuf   = endInBufP;
+    files[fileIdx - 1].pStartLine  = startLineP;
+    files[fileIdx - 1].pCurCh       = inChP;
+    files[fileIdx - 1].nReaded = readFActual;
+    files[fileIdx - 1].lineCnt   = lineChCnt;
     if (srcfd != rootfd)        /* close if include file */
     {
         Close(srcfd, &statusIO);
         IoErrChk();
     }
 
+    /*
+      включаем принудительное чтение первой порции исходника
+    */
     endInBufP = inBuf;            /* force Read() */
     inChP = endInBufP - 1;
     startLineP = inBuf;
-    files[fileIdx].blk = 0;            /* record at start of file */
-    files[fileIdx].byt = 0;
+    files[fileIdx].offs = 0;            /* record at start of file */
     srcfd = SafeOpen(files[fileIdx].name, READ_MODE);    /* Open() the file */
 }

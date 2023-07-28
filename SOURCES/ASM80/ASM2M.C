@@ -328,7 +328,7 @@ void EmitXref(byte xrefMode, byte *name) {
 
     Outch(xrefMode + '0');    /* convert to hex char */
     if (xrefMode != XREF_FIN) {    /* ! finalise */
-        OutStrN(name, 6);        /* label ref */
+        OutStrN(name, MAXSYMSIZE);        /* label ref */
         xRefPending = false;
         byteval = srcLineCnt >> 8;    /* line number in hex - high byte first */
         i = 0;
@@ -343,7 +343,7 @@ void EmitXref(byte xrefMode, byte *name) {
                 Outch(Nibble2Ascii(byteval));
         }
     } else {    /* finalise */
-        OutStrN(lstFile, 15);    /* listing file name */
+        OutStrN(lstFile, 17);    /* listing file name */
         if (controls.paging)        /* whether paging '1' or '0' */
             Outch('1');
         else

@@ -48,10 +48,6 @@ extern byte bTRUE;
 extern byte *aErrStrs[];
 extern byte aErrStrsLen[];
 
-// defined in globlm.c
-
-#define IN_BUF_SIZE     512
-#define OUT_BUF_SIZE    512
 
 extern byte macroLine[129];
 extern byte *macroP;
@@ -194,8 +190,8 @@ extern bool lineNumberEmitted;
 extern bool b68AE;
 extern byte tokStr[36];
 extern word sizeInBuf;
-extern byte inBuf[IN_BUF_SIZE];
-extern byte outbuf[OUT_BUF_SIZE+1];
+extern byte inBuf[];
+extern byte outbuf[];
 extern byte *outP;
 extern byte *endOutBuf;
 extern byte objFile[17];
@@ -248,7 +244,7 @@ extern byte cmdLineBuf[129];
 extern address actRead;
 extern word errCnt;
 extern byte *w6BCE;
-extern word azero;
+extern dword azero;
 extern byte *cmdchP;
 extern byte *controlsP;
 extern bool skipRuntimeError;

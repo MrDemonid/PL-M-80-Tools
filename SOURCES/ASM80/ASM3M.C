@@ -81,16 +81,26 @@ void UpdateHiLo(byte hilo)
 
 void HandleOp()
 {
-    switch (topOp) {
-    case 0:     break;
-    case 1:     FinishLine();        /* CR */
+    switch (topOp)
+    {
+        case 0:
             break;
-    case 2:                         /* ( */
-    case 3:                         /* ) */
-            if (! (topOp == T_LPAREN && curOp == T_RPAREN)) // incorrectly nested ()
-                BalanceError();
 
-            if (tokenType[0] == O_DATA) {
+        case Y_CR:                              /* CR */
+            FinishLine();
+            break;
+
+        case Y_LPAREN:                          /* ( */
+        case Y_RPAREN:                          /* ) */
+            if (! (topOp == T_LPAREN && curOp == T_RPAREN))
+            {
+                /*
+                  incorrectly nested ()
+                */
+                BalanceError();
+            }
+            if (tokenType[0] == O_DATA)
+            {
                 tokenSize[0] = 1;
                 tokenAttr[0] = 0;
                 b6B36 = true;
@@ -100,128 +110,223 @@ void HandleOp()
             if (curOp == T_RPAREN)
                 b6B2C = true;
             break;
-    case 4:     accum1 *= accum2;    /* * */
+
+        case Y_STAR:                            /* * */
+            accum1 *= accum2;
             break;
-    case 5:     accum1 += accum2;    /* + */
+
+        case Y_PLUS:                            /* + */
+            accum1 += accum2;
             break;
-    case 6:                         /* , */
+
+        case Y_COMMA:                           /* , */
             SyntaxError();
             PopToken();
             break;
-    case 7:     accum1 -= accum2;    /* - */
+
+        case Y_MINUS:                           /* - */
+            accum1 -= accum2;
             break;
-    case 8:     ;                /* unary + */
+
+        case Y_UPLUS:                           /* unary + */
             break;
-    case 9:                     /* / */
-        if (accum2 == 0) {
-            ValueError();
-            accum1 = 0xffff;    /* synthesise what 8085 does on / 0 */
-        }
-        else
+
+        case Y_SLASH:                           /* / */
+            if (accum2 == 0)
+            {
+                /*
+                  synthesise what 8085 does on / 0
+                */
+                ValueError();
+                accum1 = 0xffff;
+            }
+            else
                 accum1 /= accum2;
             break;
-    case 10:    accum1 = -accum1;            /* unary - */
+
+        case Y_UMINUS:                          /* unary - */
+            accum1 = -accum1;
             break;
-    case 11:    Cond2Acc(accum1 == accum2);        /* EQ */
+
+        case Y_EQ:                              /* EQ */
+            Cond2Acc(accum1 == accum2);
             break;
-    case 12:    Cond2Acc(accum1 < accum2);        /* LT */
+
+        case Y_LT:                              /* LT */
+            Cond2Acc(accum1 < accum2);
             break;
-    case 13:    Cond2Acc(accum1 <= accum2);    /* LE */
+
+        case Y_LE:                              /* LE */
+            Cond2Acc(accum1 <= accum2);
             break;
-    case 14:    Cond2Acc(accum1 > accum2);        /* GT */
+
+        case Y_GT:                              /* GT */
+            Cond2Acc(accum1 > accum2);
             break;
-    case 15:    Cond2Acc(accum1 >= accum2);    /* GE */
+
+        case Y_GE:                              /* GE */
+            Cond2Acc(accum1 >= accum2);
             break;
-    case 16:    Cond2Acc(accum1 != accum2);    /* NE */
+
+        case Y_NE:                              /* NE */
+            Cond2Acc(accum1 != accum2);
             break;
-    case 17:    accum1 = ~accum1;            /* NOT */
+
+        case Y_NOT:                             /* NOT */
+            accum1 = ~accum1;
             break;
-    case 18:    accum1 &= accum2;        /* AND */
+
+        case Y_AND:                             /* AND */
+            accum1 &= accum2;
             break;
-    case 19:    accum1 |= accum2;        /* OR */
+
+        case Y_OR:                              /* OR */
+            accum1 |= accum2;
             break;
-    case 20:    accum1 ^= accum2;        /* XOR */
+
+        case Y_XOR:                             /* XOR */
+            accum1 ^= accum2;
             break;
-    case 21:                        /* MOD */
-        if (accum2 == 0) {
-            ValueError();
-            accum1 = accum2;            // this is what the 8080 mod code would do
-        } else
-            accum1 %= accum2;
+
+        case Y_MOD:                             /* MOD */
+            if (accum2 == 0)
+            {
+                ValueError();
+                /*
+                  this is what the 8080 mod code would do
+                */
+                accum1 = accum2;
+            } else
+                accum1 %= accum2;
             break;
-    case 22:                        /* SHL */
+
+        case Y_SHL:                             /* SHL */
             if (accum2Lb != 0)
                 accum1 <<= accum2;
             break;
-    case 23:                        /* SHR */
+
+        case Y_SHR:                             /* SHR */
             if (accum2Lb != 0)
                 accum1 >>= accum2;
             break;
-    case 24:                        /* HIGH */
+
+        case Y_HIGH:                            /* HIGH */
             accum1 >>= 8;
             UpdateHiLo(UF_RHIGH);
             break;
-    case 25:                        /* LOW */
+
+        case Y_LOW:                             /* LOW */
             accum1 &= 0xff;
             UpdateHiLo(UF_RLOW);
             break;
-    case 26:                        /* DB ? */
+
+        case Y_DB:                              /* DB */
             if (tokenType[0] != O_STRING)
             {
                 accum1 = GetNumVal();
-                if ((byte)(accum1Hb - 1) < 0xFE)    /* ! 0 or FF */
+                if ((byte)(accum1Hb - 1) < 0xFE)   // ! 0 or FF
                     ValueError();
-                curOpFlags = 0x44;   /* adjusted from PLM as revised code doesn't use rotate */
-                if ((acc1RelocFlags & UF_RBOTH) == UF_RBOTH) {  // can't db a 16 bit relocatable
+                /*
+                  adjusted from PLM as revised code doesn't use rotate
+                */
+                curOpFlags = 0x44;
+                if ((acc1RelocFlags & UF_RBOTH) == UF_RBOTH)
+                {
+                    /*
+                      can't db a 16 bit relocatable
+                    */
                     ValueError();
                     acc1RelocFlags = (acc1RelocFlags & ~UF_RBOTH) | UF_RLOW;    // treat as 8 bit relocatable
                 }
             } else {
-                acc1RelocFlags = 0;         // abs bytes
-                tokenType[0] = O_DATA;      // flag as data
+                /*
+                  abs bytes
+                */
+                acc1RelocFlags = 0;
+                tokenType[0] = O_DATA;
             }
-
-            if (IsReg(acc1ValType))         // db of register is not valid
+            if (IsReg(acc1ValType))
+            {
+                /*
+                  db of register is not valid
+                */
                 OperandError();
-            nextTokType = O_DATA;           // loook for more data
-            inDB = true;                    // we are in DB statement
+            }
+            /*
+              loook for more data
+            */
+            nextTokType = O_DATA;
+            inDB = true;
             break;
-    case 27:                    /* DW ? */
-            nextTokType = O_DATA;           // look for more data
-            inDW = true;                    // we are in DW
+
+        case Y_DW:                              /* DW */
+            /*
+              look for more data
+            */
+            nextTokType = O_DATA;
+            inDW = true;
             break;
-    case 28:                        /* DS ? */
-            segLocation[activeSeg] += accum1;   // bump current $ value
-            showAddr = true;                // flag that new address should be shown
-            break;
-    case 29:                    /* EQU ? */
-    case 30:                /* SET ? */
+
+        case Y_DS:                              /* DS */
+            /*
+              bump current $ value
+            */
+            segLocation[activeSeg] += accum1;
+            /*
+              flag that new address should be shown
+            */
             showAddr = true;
-            if ((acc1RelocFlags & UF_EXTRN) == UF_EXTRN) {   /* cannot SET or EQU to external */
+            break;
+
+        case Y_EQU:                             /* EQU */
+        case Y_SET:                             /* SET */
+            showAddr = true;
+            if ((acc1RelocFlags & UF_EXTRN) == UF_EXTRN)
+            {
+                /* cannot SET or EQU to external */
                 ExpressionError();
                 acc1RelocFlags = 0;
             }
             labelUse = L_SETEQU;
-            UpdateSymbolEntry(accum1, (K_SET + O_SET) - topOp);    /* 4 for set, 5 for equ */
+            /*
+              4 for set, 5 for equ
+            */
+            UpdateSymbolEntry(accum1, (K_SET + O_SET) - topOp);
             expectingOperands = false;
             break;
-    case 31:                        /* ORG ? */
+
+        case Y_ORG:                             /* ORG */
             showAddr = true;
-            if ((acc1RelocFlags & UF_EXTRN) != UF_EXTRN) {      // check not ORG to extern
-                if ((acc1RelocFlags & UF_RBOTH) != 0)           // only org to abs or current seg 16 bit reloc
+            /*
+              check not ORG to extern
+            */
+            if ((acc1RelocFlags & UF_EXTRN) != UF_EXTRN)
+            {
+                /*
+                  only org to abs or current seg 16 bit reloc
+                */
+                if ((acc1RelocFlags & UF_RBOTH) != 0)
                     if ((acc1RelocFlags & UF_SEGMASK) != activeSeg
                       || (acc1RelocFlags & UF_RBOTH) != UF_RBOTH)
                         ExpressionError();
             } else
                 ExpressionError();
 
-            if (controls.object)                                // if object file update maxSegSize for this segment
+            /*
+              if object file update maxSegSize for this segment
+            */
+            if (controls.object)
                 if (segLocation[activeSeg] > maxSegSize[activeSeg])
                     maxSegSize[activeSeg] = segLocation[activeSeg];
-            segLocation[activeSeg] = accum1;                        // set new segLocation
+            /*
+              set new segLocation
+            */
+            segLocation[activeSeg] = accum1;
             break;
-    case 32:                        /* END ? */
-            if (tokenIdx > 0) {
+
+        case Y_END:                             /* END */
+            if (tokenIdx > 0)
+            {
                 startOffset = GetNumVal();
                 startDefined = 1;
                 startSeg = acc1RelocFlags & 7;
@@ -244,92 +349,146 @@ void HandleOp()
             else
                 SyntaxError();
             break;
-    case 33:                        /* IF ? */
+
+        case Y_IF:                              /* IF */
             if (expectOp)
             {
                 condAsmSeen = true;
-                Nest(2);        /* push current skip/else status */
-                xRefPending = true;        /* force any pending xref info to be written*/
-                if (!skipIf[0])    /* if ! skipping set new status */
+                /*
+                  push current skip/else status
+                */
+                Nest(2);
+                /*
+                  force any pending xref info to be written
+                */
+                xRefPending = true;
+                if (!skipIf[0])
+                {
+                    /*
+                      set new status
+                    */
                     skipIf[0] = ! (accum1 & 1);
-                inElse[0] = false;        /* ! in else at this nesting level */
+                }
+                /*
+                  ! in else at this nesting level
+                */
+                inElse[0] = false;
             }
             break;
-    case 34:                        /* ELSE ? */
+
+        case Y_ELSE:                            /* ELSE */
             condAsmSeen = true;
-            if (macroCondStk[0] != 2)    /* check ! mid macro nest */
+            /*
+              check ! mid macro nest
+            */
+            if (macroCondStk[0] != 2)
                 NestingError();
-            else if (! inElse[0])    /* shouldn't be in else at this level */
+            else if (! inElse[0])       // shouldn't be in else at this level
             {
-                if (! skipIf[0])    /* IF was active so ELSE forces skip */
+                if (! skipIf[0])        // IF was active so ELSE forces skip
                     skipIf[0] = true;
-                else            /* IF inactive so revert to previous skipping status */
+                else                    // IF inactive so revert to previous skipping status
                     skipIf[0] = skipIf[ifDepth];
-                inElse[0] = true;    /* in else at this nesting level */
+                inElse[0] = true;       // in else at this nesting level
             }
             else
-                NestingError();    /* multiple else !! */
+                NestingError();         // multiple else !!
             break;
-    case 35:                        /* ENDIF ? */
+
+        case Y_ENDIF:                           /* ENDIF */
             if (expectOp)
             {
+                /*
+                  revert to previous status
+                */
                 condAsmSeen = true;
-                UnNest(2);    /* revert to previous status */
+                UnNest(2);
             }
             break;
-        /* in the following topOp = K_LXI and nextTokType = O_DATA
-           except where noted on return from MkCode */
-    case 36:                        /* LXI ? */
+
+        case Y_LXI:                             /* LXI */
+            /*
+              in the following topOp = K_LXI and nextTokType = O_DATA
+              except where noted on return from MkCode
+            */
             if (nameLen == 1)
                 if (tokName[0] == 'M')
                     SyntaxError();
-            MkCode(0x85);    /* topOp = K_INRDCR, nextTokType unchanged on return */
+            /*
+              topOp = K_INRDCR, nextTokType unchanged on return
+            */
+            MkCode(0x85);
             break;
-    case 37:                    /* REG16 ops POP DAD PUSH INX DCX ? */
-            if (nameLen == 1)
+
+        case Y_REG16:                           /* REG16 ops:               */
+            if (nameLen == 1)                   /*   POP DAD PUSH INX DCX   */
                 if (tokName[0] == 'M')
                     SyntaxError();
             MkCode(5);
             break;
-    case 38:    MkCode(7);        /* LDAX STAX ? */
+
+        case Y_LDSTAX:                          /* LDAX STAX */
+            MkCode(7);
             break;
-    case 39:    MkCode(2);        /* ARITH ops ADC ADD SUB ORA SBB XRA ANA CMP ? */
+
+        case Y_ARITH:                           /* ARITH ops:               */
+            MkCode(2);                          /*   ADC ADD SUB ORA SBB    */
+            break;                              /*   XRA ANA CMP            */
+
+        case Y_IMM8:                            /* IMM8 ops:                */
+            MkCode(8);                          /*   ADI OUT SBI ORI IN CPI */
+            break;                              /*   SUI XRI ANI ACI        */
+
+        case Y_MVI:                             /* MVI, topOp = K_IMM8 on return */
+            MkCode(0x46);
             break;
-    case 40:    MkCode(8);        /* IMM8 ops ADI OUT SBI ORI IN CPI SUI XRI ANI ACI ? */
+
+        case Y_INRDCR:                          /* INR DCR */
+            MkCode(6);
             break;
-    case 41:    MkCode(0x46);    /* MVI ?  topOp = K_IMM8 on return */
+
+        case Y_MOV:                             /* MOV   topOp = K_ARITH,   */
+            MkCode(0x36);                       /* nextTokType unchanged on return */
             break;
-    case 42:    MkCode(6);        /* INR DCR ? */
+
+        case Y_IMM16:                           /* IMM16 ops:               */
+            MkCode(0);                          /*   CZ CNZ JZ STA JNZ JNC  */
+                                                /*   LHLD CP JC SHLD CPE    */
+                                                /*   CPO CM LDA JP JM JPE   */
+            break;                              /*   CALL JPO CC CNC JMP    */
+
+        case Y_SINGLE:                          /* SINGLE ops:              */
+            MkCode(0);                          /*   RNZ STC DAA DI SIM     */
+                                                /*   SPHL RLC RP RAL HLT RM */
+                                                /*   RAR RPE RET RIM PCHL   */
+                                                /*   CMA CNC RPO EI XTHL    */
+            break;                              /*   NOP RC RNX XCHG RZ RRC */
+
+        case Y_RST:                             /* RST */
+            MkCode(6);
             break;
-    case 43:    MkCode(0x36);    /* MOV   topOp = K_ARITH, nextTokType unchanged on return*/
+
+        case Y_ASEG:                            /* ASEG */
+            activeSeg = 0;
             break;
-    case 44:    MkCode(0);        /* IMM16 ops CZ CNZ JZ STA JNZ JNC LHLD */
-                        /* CP JC SHLD CPE CPO CM LDA JP JM JPE */
-                        /* CALL JPO CC CNC JMP */
-            break;
-    case 45:    MkCode(0);        /* SINGLE ops RNZ STC DAA DI SIM SPHL RLC */
-                        /* RP RAL HLT RM RAR RPE RET RIM */
-                        /* PCHL CMA CNC RPO EI XTHL NOP */
-                        /* RC RNX XCHG RZ RRC */
-            break;
-    case 46:    MkCode(6);        /* RST */
-            break;
-    case 47:    activeSeg = 0;            /* ASEG ? */
-            break;
-    case 48:                    /* CSEG ? */
+
+        case Y_CSEG:                            /* CSEG */
             activeSeg = 1;
             ChkSegAlignment(0);
             break;
-    case 49:                    /* DSEG ? */
+
+        case Y_DSEG:                            /* DSEG */
             activeSeg = 2;
             ChkSegAlignment(1);
             break;
-    case 50:                    /* PUBLIC */
+
+        case Y_PUBLIC:                          /* PUBLIC */
             inPublic = true;
             labelUse = L_REF;
             UpdateSymbolEntry(0, O_REF);
             break;
-    case 51:                    /* EXTRN ? */
+
+        case Y_EXTRN:                           /* EXTRN */
             inExtrn = true;
             if (externId == 0 && IsPhase1() && controls.object)
                 WriteModhdr();
@@ -341,42 +500,73 @@ void HandleOp()
                 externId++;
             badExtrn = false;
             break;
-    case 52:                    /* NAME */
-            if (tokenIdx != 0 && noOpsYet) {
-                /* set the module name in the header - padded to 6 chars */
+
+        case Y_NAME:                            /* NAME */
+            if (tokenIdx != 0 && noOpsYet)
+            {
+                /*
+                  set the module name in the header - padded to 6 chars
+                */
                 move(6, spaces6, aModulePage);
                 move(moduleNameLen = nameLen, tokName, aModulePage);
             } else
-                SourceError('R');   /* NAME directive was preceded by an instruction or another directive */
-            PopToken();         // consume the token
+                SourceError('R');
+            /*
+              consume the token
+            */
+            PopToken();
             break;
-    case 53:    segLocation[SEG_STACK] = accum1;    /* STKLN ? */
+
+        case Y_STKLN:                           /* STKLN */
+            segLocation[SEG_STACK] = accum1;
             break;
-    case 54:    DoMacro();            /* MACRO ? */
+
+        case Y_MACRO:                           /* MACRO */
+            DoMacro();
             break;
-    case 55:    DoMacroBody();                    /* MACRO BODY */
+
+        case Y_MACROPARAM:                      /* MACRO BODY */
+            DoMacroBody();
             break;
-    case 56:    DoEndm();            /* ENDM */
+
+        case Y_ENDM:                            /* ENDM */
+            DoEndm();
             break;
-    case 57:    DoExitm();            /* EXITM */
+
+        case Y_EXITM:                           /* EXITM */
+            DoExitm();
             break;
-    case 58:                                            /* MACRONAME */
+
+        case Y_MACRONAME:                       /* MACRONAME */
             macro.top.mtype = M_INVOKE;
             initMacroParam();
             break;
-    case 59:    DoIrpX(M_IRP);        /* IRP ? */
+
+        case Y_IRP:                             /* IRP */
+            DoIrpX(M_IRP);
             break;
-    case 60:    DoIrpX(M_IRPC);        /* IRPC */
+
+        case Y_IRPC:                            /* IRPC */
+            DoIrpX(M_IRPC);
             break;
-    case 61:    DoIterParam();                  /* MACRO PARAMETER */
+
+        case Y_ITERPARAM:                       /* MACRO PARAMETER */
+            DoIterParam();
             break;
-    case 62:    DoRept();            /* REPT ? */
+
+        case Y_REPT:                            /* REPT */
+            DoRept();
             break;
-    case 63:     DoLocal();            /* LOCAL */
+
+        case Y_LOCAL:                           /* LOCAL */
+            DoLocal();
             break;
-    case 64:    Sub78CE();      /* optVal */
+
+        case Y_NULVAL:                          /* optVal */
+            Sub78CE();
             break;
-    case 65:                    /* NUL */
+
+        case Y_NUL:                             /* NUL */
             Cond2Acc(tokenType[0] == K_NUL);
             PopToken();
             acc1RelocFlags = 0;

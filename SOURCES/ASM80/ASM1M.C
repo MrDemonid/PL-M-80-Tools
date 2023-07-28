@@ -69,14 +69,16 @@ byte NonHiddenSymbol()
 /* seek to specified macro block (128 byte) in macro spool file */
 void SeekM(word blk)
 {
+    dword offs;
+
     if (aVar.w = blk - nxtMacroBlk) {           // if already there then nothing to do
         kk = SEEKFWD;                                           // check if we need to seek fwd / bwd
         if (blk < nxtMacroBlk) {
             aVar.w = -aVar.w;
             kk = SEEKBACK;
         }
-
-        Seek(macrofd, kk, &aVar.w, &seekMZero, &statusIO);      // seek to the required block
+        offs = aVar.w * 128 + seekMZero;
+        Seek(macrofd, kk, &offs, &statusIO);      // seek to the required block
         IoErrChk();
     }
     nxtMacroBlk = blk + 1;                                      // update next block info

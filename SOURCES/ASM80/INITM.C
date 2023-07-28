@@ -222,7 +222,7 @@ void ResetData()
         endInBufP = inBuf;
         inChP = endInBufP - 1;
         startLineP = inBuf;
-        Seek(infd, SEEKABS, &azero, &azero, &statusIO);    /* rewind */
+        Seek(infd, SEEKABS, &azero, &statusIO);    /* rewind */
         IoErrChk();
     }
 

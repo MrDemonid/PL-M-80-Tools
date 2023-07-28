@@ -111,7 +111,7 @@ void Rescan(word conn, word *statusP);
 void ResetData();
 void RuntimeError(byte errCode);
 word SafeOpen(byte *pathP, word access);
-void Seek(word conn, word mode, word *blockP, word *byteP, word *statusP);
+void Seek(word conn, word mode, dword *offsP, word *statusP);
 void SetExpectOperands();
 bool ShowLine();
 void Skip2EOL();

@@ -99,7 +99,7 @@ struct {
 const int nDevices = (sizeof(deviceMap) / sizeof(deviceMap[0]));
 
 
-char verNo[] = "v5.1";
+char verNo[] = "v5.2";
 
 
 /* preps the deviceId and filename of an spath info record
@@ -384,7 +384,7 @@ void Open(word *connP, const byte *pathP, word access, word echo, word *statusP)
     switch (access) {
     case READ_MODE: mode = O_RDONLY | O_BINARY; break;
     case WRITE_MODE: mode = O_WRONLY | O_CREAT | O_TRUNC | O_BINARY; break;
-    case UPDATE_MODE: mode = O_RDWR | O_CREAT | O_TRUNC | O_BINARY; break;
+    case UPDATE_MODE: mode = O_RDWR | O_CREAT | O_BINARY; break;
     default: fprintf(stderr, "bad access mode %d for %s\n", access, osfile.name);
         *statusP = ERROR_BADPARAM;
         return;
@@ -504,7 +504,7 @@ void Rescan(word conn, word *statusP)
 
 
 
-void Seek(word conn, word mode, word *blockP, word *byteP, word *statusP)
+void Seek(word conn, word mode, dword *offsP, word *statusP)
 {
     long offset;
     int origin;
@@ -518,28 +518,37 @@ void Seek(word conn, word mode, word *blockP, word *byteP, word *statusP)
     }
 
     if (mode != SEEKTELL)
-        offset = *blockP * 128 + *byteP;
+        offset = *offsP;
 
-    switch (mode) {
-    case SEEKTELL:
-        offset = lseek(aft[conn].fd, 0L, SEEK_CUR);
-        *blockP = (word) (offset / 128);
-        *byteP = offset % 128;
-        *statusP = 0;
-        return;
-    case SEEKABS:       origin = SEEK_SET; break;
-    case SEEKBACK:      offset = -offset;
-    case SEEKFWD:       origin = SEEK_CUR; break;
-    case SEEKEND:       origin = SEEK_END; offset = 0;  break;
-    default: fprintf(stderr, "Unsupported seek mode %d\n", mode);
-        *statusP = ERROR_BADMODE;
-        return;
+    switch (mode)
+    {
+        case SEEKTELL:
+            offset = lseek(aft[conn].fd, 0L, SEEK_CUR);
+            *statusP = 0;
+            *offsP = offset;
+            return;
+        case SEEKABS:
+            origin = SEEK_SET;
+            break;
+        case SEEKBACK:
+            offset = -offset;
+        case SEEKFWD:
+            origin = SEEK_CUR;
+            break;
+        case SEEKEND:
+            origin = SEEK_END;
+            offset = 0;
+            break;
+        default: fprintf(stderr, "Unsupported seek mode %d\n", mode);
+            *statusP = ERROR_BADMODE;
+            return;
     }
     if (lseek(aft[conn].fd, offset, origin) >= 0)
         *statusP = 0;
     else
         *statusP = ERROR_BADPARAM;
 }
+
 void Write(word conn, const byte *buffP, word count, word *statusP)
 {
     if ((*statusP = ChkMode(conn, WRITE_MODE)) != ERROR_SUCCESS)

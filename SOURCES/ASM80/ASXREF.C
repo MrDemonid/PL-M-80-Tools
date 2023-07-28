@@ -83,7 +83,7 @@ struct {
 
 
 typedef struct {
-    char name[6];
+    char name[MAXSYMSIZE];
     offset head;            // offset to line ref chain
 } xref_t;
 
@@ -112,7 +112,7 @@ word botHighHeap;
 word status;
 byte outputLine[256];
 byte col;
-byte path[15];
+byte path[17];
 byte row;
 byte pageLength;
 byte pageWidth;
@@ -164,7 +164,7 @@ static void OpenTmp()
 
 static void OpenListFile()
 {
-    word dummy;
+    dword dummy;
 
     if (path[0] == ':' && (path[1] & 0xdf) != 'F')    /* test as UCase */
         Open(&connP, path, WRITE_MODE, 0, &status);    /* device */
@@ -172,7 +172,7 @@ static void OpenListFile()
         Open(&connP, path, UPDATE_MODE, 0, &status);    /* file */
 
     StatusChk(status);
-    Seek(connP, SEEKEND, &dummy, &dummy, &status);    /* seek end */
+    Seek(connP, SEEKEND, &dummy, &status);    /* seek end */
     if (status == 0x13)    /* bad seek on non file is ok */
         return;
     StatusChk(status);
@@ -241,7 +241,7 @@ static offset AllocLineRef()
 
 static offset AllocXref()
 {
-    botHighHeap = botHighHeap - 8;
+    botHighHeap = botHighHeap - sizeof(xref_t);
     if (botHighHeap >= topLowHeap)
         return botHighHeap + 1;
     FatalError(1);
@@ -266,7 +266,7 @@ static offset NextXref(offset ptr)
 
 static bool CmpXrefNames(const char *str1, const char *str2)
 {
-    return memcmp(str1, str2, 6) == 0;
+    return memcmp(str1, str2, MAXSYMSIZE) == 0;
 }
 
 static offset FindXref(const char *name, bool *pFound)
@@ -287,7 +287,7 @@ static offset FindXref(const char *name, bool *pFound)
     else
     {
         pNewXref = AllocXref();
-        memcpy(MkXrefPtr(pNewXref)->name, name, 6);   // copy name to new entry
+        memcpy(MkXrefPtr(pNewXref)->name, name, MAXSYMSIZE);   // copy name to new entry
         itemCount++;
         return pNewXref;
     }
@@ -334,7 +334,10 @@ static offset GetPLineRef(byte from, offset ptr, bool *pMoreLineRefs)
 static word GetLineNum(offset pLineRef, bool *pIsDef)
 {
     word lineRef = MkLinePtr(pLineRef)->lineNum;
-    *pIsDef = lineRef & 0x8000;
+    if (lineRef & 0x8000)
+        *pIsDef = true;
+    else
+        *pIsDef = false;
     return 0x7fff & lineRef;
 }
 
@@ -359,7 +362,7 @@ static byte GetTmpRecord()
 
     type = outputLine[0] - '0';
 
-    if (type > XREF_FIN || !ReadTmp(&outputLine[1], type == XREF_FIN ? 20 : 10))
+    if (type > XREF_FIN || !ReadTmp(&outputLine[1], type == XREF_FIN ? 22 : 22))
         FatalError(0);
     return type;
 }
@@ -382,7 +385,7 @@ static byte *GetPSymbol()
 
 static word GetLineNumber()
 {
-    return Htoi(&outputLine[7], 4);
+    return Htoi(&outputLine[19], 4);
 }
 
 static void ProcXrefRecord(byte isDef)
@@ -392,7 +395,7 @@ static void ProcXrefRecord(byte isDef)
 
 static void CopyFileName()
 {
-    memcpy(path, outputLine + 1, 15);
+    memcpy(path, outputLine + 1, 17);
 }
 
 
@@ -400,9 +403,9 @@ static void CopyFileName()
 static void ProcFileRecord()
 {
     CopyFileName();
-    paging = outputLine[16];
-    pageLength = (byte)Htoi(&outputLine[17], 2);
-    pageWidth = (byte)Htoi(&outputLine[19], 2);
+    paging = outputLine[18];
+    pageLength = (byte)Htoi(&outputLine[19], 2);
+    pageWidth = (byte)Htoi(&outputLine[21], 2);
     haveFileInfo = true;
 }
 
@@ -428,7 +431,7 @@ static void SortXrefs()
         while (n <= itemCount) {
             m = n - k;
             tmpXref = *GetPXref(n);
-            while (m > 0 && memcmp(tmpXref.name, GetPXref(m)->name, 6) < 0) {
+            while (m > 0 && memcmp(tmpXref.name, GetPXref(m)->name, MAXSYMSIZE) < 0) {
                 *GetPXref(m + k) = *GetPXref(m);
                 m = m - k;
             }
@@ -476,8 +479,8 @@ static void PageHeader(byte pageNum)
 
 static void NameToOutputLine(offset pXref)
 {
-    memcpy(&outputLine[col], MkXrefPtr(pXref)->name, 6);
-    col += 6;
+    memcpy(&outputLine[col], MkXrefPtr(pXref)->name, MAXSYMSIZE);
+    col += MAXSYMSIZE;
 }
 
 static void OutputLineRef(offset pLineRef)
@@ -511,7 +514,7 @@ static void OutputXref()
         NameToOutputLine(pXref);
         pLineRef = GetPLineRef(0, pXref, &moreLineRefs);
         while (moreLineRefs) {
-            col = 7;
+            col = 19;
             refsCnt = 0;
             while (++refsCnt <= refsPerLine && moreLineRefs) {
                 OutputLineRef(pLineRef);
@@ -557,7 +560,7 @@ void GenAsxref() {      // will reuse the asxrefTmp file from the main routine s
             Close(tmpAFTN, &status);
             Close(connP, &status);
             Delete(asxrefTmp, &status);
-            Exit();
+            return;
         }
     }
 }
