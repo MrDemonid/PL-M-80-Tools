@@ -99,7 +99,7 @@ struct {
 const int nDevices = (sizeof(deviceMap) / sizeof(deviceMap[0]));
 
 
-char verNo[] = "v5.2";
+char verNo[] = "v5.1";
 
 
 /* preps the deviceId and filename of an spath info record
@@ -214,7 +214,12 @@ int main(int argc, char **argv)
     size_t len;
     char *s, *progname;
 
-    if (argc == 2 && _stricmp(argv[1], "-v") == 0)
+    if (argc == 1)
+    {
+        showVersion(stdout, 0);
+        exit(0);
+    }
+    if (argc == 2 && _stricmp(argv[1], "-v") == 0 || _stricmp(argv[1], "-h") == 0)
     {
         showVersion(stdout, argv[1][1] == 'V');
         exit(0);
